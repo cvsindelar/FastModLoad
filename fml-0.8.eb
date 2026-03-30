@@ -1,0 +1,29 @@
+easyblock = 'Tarball'
+
+name = 'fml'
+version = '0.8'
+
+homepage = 'https://github.com/cvsindelar/FastModLoad'
+description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
+
+toolchain = SYSTEM
+
+source_urls = ['https://github.com/cvsindelar/fml/archive/refs/tags/']
+sources = ['v%(version)s.tar.gz']
+
+start_dir = 'fml-%(version)s'
+
+sanity_check_paths = {
+    'files': ['fml.sh'],
+    'dirs': ['.'],
+}
+
+modluafooter = '''
+local script = pathJoin(root, "fml.sh")
+execute {cmd="source " .. script, modeA={"load"}}
+execute {cmd="echo '' >&2", modeA={"load"}}
+execute {cmd="echo 'Fast Module Loading activated.' >&2", modeA={"load"}}
+execute {cmd="echo Note: to turn off Fast Module Loading, do 'module purge' or 'module unload fml'  >&2", modeA={"load"}}
+'''
+
+moduleclass = 'tools'
