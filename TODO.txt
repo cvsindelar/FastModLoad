@@ -1,4 +1,8 @@
 # Remaining features to implement:
+# -1:
+#  split fml function and module functions:
+#    fml: put back __mlq_merge, because why not
+
 # 0. Final intended use case:
 #  - HPC curated list of 'safe' fast modules
 #  - User can force fast module loading of new environments with --fml
