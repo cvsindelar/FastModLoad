@@ -22,6 +22,7 @@ if myShellType() == "sh" then
   execute {cmd="echo 'Fast Module Loading activated.' >&2", modeA={"load"}}
   execute {cmd="echo Note: to turn off Fast Module Loading, do 'module purge' or 'module unload fml'  >&2", modeA={"load"}}
 
+  execute {cmd = "__fml_exit", modeA = {"unload"}}
 else
   execute {cmd="echo 'FML: sorry, this is not implemented for shell type ".. myShellType() .. "' >&2", modeA={"load"}}
 end

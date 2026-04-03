@@ -229,7 +229,7 @@ function __fml_load() {
     ######################
     # If "reset" is requested, reload fml after
     ######################
-    if [[ " $@ " == *" reset "* ]] ; then
+    if [[ " $@ " == *" reset "* && -z "${autobuild}" ]] ; then
         get_fml_lua_script='for key, subTable in pairs(_ModuleTable_.mT) do
           if type(subTable) == "table" and subTable.fn then
             local prefix, suffix = subTable.fn:match("^(.-/)(fml/[^/]+)%.lua$")
