@@ -1,31 +1,28 @@
 # Remaining features to implement:
-# -1:
-#  split fml function and module functions:
-#    fml: put back __mlq_merge, because why not
 
-# 0. Final intended use case:
-#  - HPC curated list of 'safe' fast modules
-#  - User can force fast module loading of new environments with --fml
-#  - User can revert to ordinary module loading with --ml
-# 1. Auto-rebuilding out of date fast modules
+# Priority #1
+# 1. fml --global to copy fast module builds to the global directory, if user has write permissions.
+# 2. "module list" -> prints the archived output of the original module load
+#    -> append the raw lmod 'module list' results
+
+# Priority #2
 # 3. --fmldebug to mirror lines output by __fml_load
-# 4. "module list" -> prints the archived output of the original module load
-#    "module --<any option> list -> prints the raw lmod 'module list' results
-# 5. --fmlinstall to copy fast module builds to the global directory, if user has write permissions.
-# 6. Auto-deleting local fast module builds when they are identical to the global builds
-#    (works for all users, minimizes file count burden on the filesystem)
-# 7. __fml_unpack upon unloading fml (find the solution for the bug which has been identified)
-# 8. instead of saving external functions, execute 'fml.sh load ...', 'fml.sh unload ...' and 'fml.sh exit'
-# 9. Safety: define new module function in the fml/2.0beta.lua upon 'load', using set_shell_function
+# 4. make fml.sh a bash executable with 3 options: init, module, fml
+# 5. put back __mlq_merge
+# 6. __fml_unpack upon unloading fml (find the solution for the bug which has been identified)
+
+Priority #3
+
+# 7. Safety: define new module function in the fml/2.0beta.lua upon 'load', using set_shell_function
 #    and embed the original module code inside, to be unloaded on 'unload'
-#    Improve safety by redefining 'module' to the original lmod function during __fml_load execution?
+#    - trap function restores original module function using embedded code
+#    - Improve safety by redefining 'module' to the original lmod function during __fml_load execution?
 #      -> this line:
 #          eval $(__fml_load "${@:1}")
 #      -> goes to:
 #          eval "${__fml_orig_module_code}" ; eval $(__fml_load "${@:1}") ; eval "${__fml_module_code}"
-#      -> Also, 
-#    Successful completion of fml module restores fml module.
-# 10. Implement tcsh/csh functionality ; 
+#      -> successful completion of fml module restores fml module.
+# 8. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
@@ -35,14 +32,18 @@
 #     The bash equivalent for eval "${__fml_orig_module_code}" 
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
-# 11. Implement functionality to reconstruct already loaded slow environments
-#    -> kludge for R: detect if any of the requested modules does not wind up
-#       in the loaded list. If so, generate the corresponding complete fml name
-#       and copy the contents of the incompletely named fml to it
-# 12. using miniconda fast module, activating a module that does 'module load' in its
+
+# CONDA FAILURE MODE:
+# (solution is to prevent, or at least warn about, including conda/miniconda/etc in fast modules):
+# If miniconda is put in a fast module, activating a conda env that does 'module load' in its
 #    activate.d fails the first time around (env is not activated)
-#    This is because after loading the second module, fml reverts to slow module loading-
-#     therefore, it unloads the miniconda fast module in the midst of a conda activate command!!
-#    At least, it succeeds with the second try because the slow environment was restored (!).
+#    This is because fml cannot load this second module without first unloading the entire fast module.
+#    This unloads the miniconda fast module in the midst of a conda activate command!!
+#    At least, could succeeds with the second try if fml automatically restores the slow environment.
 #    Example: /home/cvs2/.conda/envs/fil_new/etc/conda/activate.d/env_vars.sh
 #    ml fml/2 ; export FML_THRESH=0 ; ml miniconda ; ml reset ; ml miniconda ; conda activate fil_new
+
+# Very optional:
+# 9. Auto-deleting local fast module builds when they are identical to the global builds
+#    (works for all users, minimizes file count burden on the filesystem)
+
