@@ -369,7 +369,8 @@ function __get_fml_filename() {
                                                    print $2
                                                  }}' ) )
                 # echo eval ${build_lua_record} '| cmp '${fml_filename%.lua}.lua_record >&2 # >& /dev/null
-                eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
+                stat "${ordered_module_list[@]}" &>/dev/null \
+		    && eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
                 update_needed=$?
             else
                 update_needed=1
