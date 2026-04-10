@@ -116,9 +116,16 @@ else
         fi
     }
 
-######################
-# fml function that builds and loads fast modules
-######################
+    ######################
+    # fml function that builds and loads fast modules
+    ######################
+
+    # Enable autocompletion for fml the same as 'ml':
+    t=(`complete -p ml`)
+    if [ "$(type -t ${t[2]})" = 'function' ]; then
+        complete -F "${t[2]}" fml
+    fi
+    
     function fml() {
         local runtime
         local __fml_build_request
@@ -140,22 +147,12 @@ else
             fi
         else
             if [[ -n "${__fml_build_request[@]}" ]] ; then
-                echo 'Skipping fast module build; load time '"${runtime}"' did not exceed the threshold '"${FML_THRESH}"
+                echo 'Skipping fast module build:'
+                echo '  Load time ('"${runtime}"' sec) did not exceed the threshold of '"${FML_THRESH}"' sec'
             fi            
         fi
         
     }
-
-    # function module() {
-        # suppress the greeting with module reset/purge, when fml gets automatically unloaded/reloaded:
-        # [[ " $@ " == *" reset "* || " $@ " == *" purge "* ]] && export __fml_suppress_greeting=1
-
-        # local __fml_status
-        # eval $(__fml_load "${@:1}")
-        # __fml_status=$?
-        # unset __fml_suppress_greeting
-        # return $__fml_status
-    # }
 fi
 
 ######################
@@ -256,7 +253,7 @@ function __fml_load() {
     ######################
 
     load_arguments=( $(__fml_get_load_arguments "${@:1}") )
-    if [[ -z "${load_arguments[@]}" ]] ; then
+    if [[ -z "${autobuild}" && -z "${load_arguments[@]}" ]] ; then
         echo "__fml_orig_module ${@:1}"
         return
     fi
@@ -274,39 +271,60 @@ function __fml_load() {
     
     # Check to be sure we are starting from a fresh environment (no other loaded modules or fast modules);
     #  otherwise there can be pathologies.
-    if [[ ( -n "${old_fml_name}" && "${old_fml_name}" != '0' && -n "${load_arguments[@]}" ) \
-              || "${old_fml_info[0]:-}" == '0' ]] ; then
 
-        if [[ "${old_fml_info[0]:-}" == '0' ]] ; then # modules already present
-            ordered_module_list=( $( ( __fml_orig_module --mt ; \
-                                      echo "${module_names_from_mt_lua_script}" ) \
-                                     |& lua - | sort -n -k 1 \
-                                     | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-                                               print $2;
-                                             }}' ) )
-            echo 'Additional modules are already loaded;' >& 2
-        else
-            echo 'Additional module(s) : '"${load_arguments[@]}" >&2
-            echo '  cannot be loaded on top of fast module '"fml-${old_fml_name}" >&2
-            
+    if [[ -n "${old_fml_name}" && "${old_fml_name}" != '0' ]] ; then
+        if [[ -n "${load_arguments[@]}" ]] ; then
+            # fast module is loaded and more modules are requested
+            #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
+            #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
+            #     (R-bundle-Bioconductor) just to print something
             ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
-                                      echo "${module_names_from_mt_lua_script}" ) \
-                                     |& lua - | sort -n -k 1 \
-                                     | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-                                               print $2;
-                                             }}' ) )            
+                                  echo "${module_names_from_mt_lua_script}" ) \
+                                 |& lua - | sort -n -k 1 \
+                                 | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
+                                           print $2;
+                                         }}
+                                         {arg2=$2}
+                                         END {if(NR != lastln) print arg2}' ) )
+            # echo 'Unpacking fast module '"fml-${old_fml_name} :" >&2
+            # echo "   ${ordered_module_list[@]}" >&2
+            # echo 'Additional module(s) : '"${load_arguments[@]}" >&2
+            # echo '  will be loaded on top' >&2
+            __fml_unpack "${old_fml_modfile}"
         fi
-        
-        echo 'To create fast module for this environment, do "module reset" followed by:' >&2
-        echo "    fml ${ordered_module_list[@]} ${load_arguments[@]}" >&2
-        return 1
     fi
-
+        
+    if [[ "${autobuild}" -eq '1' \
+              && ( "${old_fml_name}" == '0' || -n "${ordered_module_list[@]}" ) ]] ; then
+        # Trying to build fast module with modules already present
+        #  -> note the hack in the awk script below (END clause) as above to handle
+        #     the faulty YCRC R module
+        if [[ -n "${load_arguments[@]}" ]] ; then
+            if [[ "${old_fml_name}" == '0'  ]] ; then
+                ordered_module_list=( $( ( __fml_orig_module --mt ; \
+                                           echo "${module_names_from_mt_lua_script}" ) \
+                                         |& lua - | sort -n -k 1 \
+                                             | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
+                                                      print $2;
+                                                    }}
+                                                    {arg2=$2}
+                                                    END {if(NR != lastln) print arg2}' ) )
+            fi
+            echo 'Slow-loading this environment because additional modules were already loaded;' >& 2
+            echo 'To create a fast module for this environment, do "module reset" followed by:' >&2
+            echo "    fml ${ordered_module_list[@]} ${load_arguments[@]}" >&2
+            autobuild=''
+        else
+            echo 'FML!' >&2
+            return 1
+        fi
+    fi
+        
     fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
 
     if [[ -z "${fml_info[0]}" || "$?" -ne '0' ]] ; then
-        echo 'FML did not recognize the requested modules; reverting to Lmod: module load '"${load_arguments[@]}" >&2
-        echo "__fml_orig_module ${@:1}"
+        # echo 'FML did not recognize the requested modules; reverting to Lmod: module load '"${load_arguments[@]}" >&2
+        echo "__fml_orig_module ${@:1} ; "
         return
     fi
 
@@ -531,15 +549,19 @@ function __fml_unpack() {
     mkdir -p ~/.config/lmod
     tmpfile=$( mktemp -p ~/.config/lmod fmlXXXXXXXXXX )
     /bin/cp "${mt_file}" "${tmpfile}"
-    __fml_orig_module restore $(basename "${tmpfile}")  >& /dev/null
-    status=$?
+    echo '__fml_orig_module restore '$(basename "${tmpfile}")' >& /dev/null; '
+    echo '__fml_status=$? ; '
+    echo "/bin/rm ${tmpfile} ; "
 
-    if [[ "${status}" -ne 0 ]] ; then
-        echo 'fml internal failure: Failed to restore original module environment :'
-        echo ' -> ' $2
-    fi
+    # __fml_orig_module restore $(basename "${tmpfile}") >&2 # >& /dev/null
+    # status=$?
+
+    # if [[ "${status}" -ne 0 ]] ; then
+    #     echo 'fml internal failure: Failed to restore original module environment :'
+    #     echo ' -> ' $2
+    # fi
+    # /bin/rm "${tmpfile}"
     
-    /bin/rm "${tmpfile}"
     [[ "${status}" -ne 0 ]] && return "${status}"
 }
 

@@ -4,15 +4,16 @@
 # 1. fml --global to copy fast module builds to the global directory, if user has write permissions.
 # 2. "module list" -> prints the archived output of the original module load
 #    -> append the raw lmod 'module list' results
+# 3. 'fml' with no args converts the currently loaded module into a fast module
 
 # Priority #2
 # 3. --fmldebug to mirror lines output by __fml_load
 # 4. make fml.sh a bash executable with 3 options: init, module, fml
-# 5. put back __mlq_merge
-# 6. __fml_unpack upon unloading fml (find the solution for the bug which has been identified)
+# 5. __fml_unpack upon unloading fml (find the solution for the bug which has been identified)
 
 Priority #3
 
+# 6. Warn when including conda/miniconda in a fast module
 # 7. Safety: define new module function in the fml/2.0beta.lua upon 'load', using set_shell_function
 #    and embed the original module code inside, to be unloaded on 'unload'
 #    - trap function restores original module function using embedded code
