@@ -7,9 +7,9 @@
 # 3. 'fml' with no args converts the currently loaded module into a fast module
 
 # Priority #2
-# 3. --fmldebug to mirror lines output by __fml_load
 # 4. make fml.sh a bash executable with 3 options: init, module, fml
 # 5. __fml_unpack upon unloading fml (find the solution for the bug which has been identified)
+# 5b: consolidate __fml_get_load_info into __get_fml_filename
 
 Priority #3
 

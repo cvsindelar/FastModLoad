@@ -24,6 +24,38 @@ else
     fi
 fi
 
+##################
+# lua script for extracting the list of module files, in the correct build order.
+# This obtains a list of lua modulefiles from an lmod-style module table (lua code)
+# Used to get 'ordered_module_list'
+##################
+process_collection_lua_script='
+for key, subTable in pairs(_ModuleTable_.mT) do 
+  if type(subTable) == "table" and subTable.fn then
+    print(subTable.loadOrder, subTable.fn) 
+  end 
+end '
+
+##################
+# lua script for getting the ordered list of module names from 
+#  the lmod-style module table (lua code)
+##################
+module_names_from_mt_lua_script='
+for key, subTable in pairs(_ModuleTable_.mT) do 
+  if type(subTable) == "table" and subTable.fullName then
+    print(subTable.loadOrder, subTable.fullName, subTable.stackDepth) 
+  end 
+end '
+
+##################
+# Bash command to save file info, including the full contents, size, and date,
+#  for the set of lua modulefiles that defines a shortcut; this is used 
+#  to test if any of them changed, meaning the shortcut should be rebuilt.
+# Bash code is saved in string form to be executed later.
+# When executed, it will require that the list of module files, $ordered_module_list, be set already.
+##################
+build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
+
 ######################
 # Function to unload the fml module
 ######################
@@ -96,24 +128,24 @@ else
     function module() {
         local runtime
         local __fml_build_request
+        local fml_debug
 
-        # echo debug $(__fml_load "${@:1}") >&2
-        eval $(__fml_load "${@:1}" )  >&2
-
-        # Below we run the fml building function, IF there was no error in the
-        #  requested lmod operations.
-        # If perchance the above lmod operations unloaded fml however,
-        #  the function will have been deleted, so we need to first test whether it still exists
-        runtime=$( echo ${__fml_start:-} ${__fml_end:-} | awk '{print $2 - $1}' )
-        if [[ -n "${__fml_build_request[@]}" \
-                 && "${__fml_status:-}" -eq 0 \
-                 && -n $(declare -f __fml_build) ]] ; then
-            __fml_build
-            return $?
-        elif [[ "${runtime}" -ge $FML_THRESH ]] ; then
-            echo 'Slow load time detected : '${runtime}' sec'
-            echo "Consider creating a fast module with 'fml <mod1> <mod2> ...'"
+        fml_debug=0
+        if [[ "$1" == '--fmldebug' ]] ; then
+            fml_debug=1
+            shift
         fi
+
+        if [[ "${fml_debug}" -ne 1 ]] ; then
+            eval $(__fml_load "${@:1}" )
+        else
+            echo $(__fml_load "${@:1}")
+        fi
+        
+        runtime=$( echo ${__fml_start:-} ${__fml_end:-} | awk '{print $2 - $1}' )
+        if [[ "${runtime}" -ge $FML_THRESH ]] ; then
+            echo 'Slow load time detected : '${runtime}' sec' 
+        fi        
     }
 
     ######################
@@ -129,29 +161,19 @@ else
     function fml() {
         local runtime
         local __fml_build_request
+        local fml_debug
 
-        # echo debug $(__fml_load "${@:1}")
-        eval $(__fml_load --fmlautobuild load "${@:1}" )
-
-        # Below we run the fml building function, IF there was no error in the
-        #  requested lmod operations.
-        # If perchance the above lmod operations unloaded fml however,
-        #  the function will have been deleted, so we need to first test whether it still exists
-        runtime=$( echo ${__fml_start:-} ${__fml_end:-} | awk '{print $2 - $1}' )
-        if [[ "${runtime}" -ge $FML_THRESH ]] ; then
-            echo 'Slow load time detected : '${runtime}' sec' 
-            if [[ "${__fml_status:-}" -eq 0 \
-                      && -n $(declare -f __fml_build) ]] ; then
-                __fml_build
-                return $?
-            fi
-        else
-            if [[ -n "${__fml_build_request[@]}" ]] ; then
-                echo 'Skipping fast module build:'
-                echo '  Load time ('"${runtime}"' sec) did not exceed the threshold of '"${FML_THRESH}"' sec'
-            fi            
+        fml_debug=0
+        if [[ "$1" == '--debug' ]] ; then
+            fml_debug=1
+            shift
         fi
-        
+
+        if [[ "${fml_debug}" -ne 1 ]] ; then
+            eval $(__fml_load --fmlautobuild load "${@:1}" )
+        else
+            echo $(__fml_load --fmlautobuild load "${@:1}")
+        fi        
     }
 fi
 
@@ -160,22 +182,19 @@ fi
 #  (but with 'module' substituted by __fml_orig_module')
 ######################
 function __fml_load() {
-    local get_fml_lua_script
-    local fml_components
     local load_arguments
     local fml_info
     local fml_filename
     local old_fml_info
     local old_fml_name
     local old_fml_modfile
-    local process_collection_lua_script
-    local new_fml_name
-    # local build_lua_record
     local autobuild
+    local status
+    local fml_skip
 
     unset autobuild
     unset fmlglobal
-    while [[ "$1" == '--fmlautobuild' || "$1" == '--fmlglobal' ]] ; do
+    while [[ "$1" == '--fmlautobuild' || "$1" == '--fmlglobal' || "$1" == '--fmldebug' ]] ; do
         case "$1" in
             --fmlautobuild)
                 autobuild=1
@@ -187,41 +206,13 @@ function __fml_load() {
                 shift
                 break
                 ;;
+            --fmldebug)
+                shift
+                break
+                ;;
         esac
     done
     
-    ##################
-    # lua script for extracting the list of module files, in the correct build order.
-    # This obtains a list of lua modulefiles from an lmod-style module table (lua code)
-    # Used to get 'ordered_module_list'
-    ##################
-    process_collection_lua_script='
-    for key, subTable in pairs(_ModuleTable_.mT) do 
-      if type(subTable) == "table" and subTable.fn then
-        print(subTable.loadOrder, subTable.fn) 
-      end 
-    end '
-        
-    ##################
-    # lua script for getting the ordered list of module names from 
-    #  the lmod-style module table (lua code)
-    ##################
-    module_names_from_mt_lua_script='
-    for key, subTable in pairs(_ModuleTable_.mT) do 
-      if type(subTable) == "table" and subTable.fullName then
-        print(subTable.loadOrder, subTable.fullName, subTable.stackDepth) 
-      end 
-    end '
-
-    ##################
-    # Bash command to save file info, including the full contents, size, and date,
-    #  for the set of lua modulefiles that defines a shortcut; this is used 
-    #  to test if any of them changed, meaning the shortcut should be rebuilt.
-    # Bash code is saved in string form to be executed later.
-    # When executed, it will require that the list of module files, $ordered_module_list, be set already.
-    ##################
-    build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
-
     echo 'unset __fml_start ; '
     echo 'unset __fml_end ; '
 
@@ -229,6 +220,7 @@ function __fml_load() {
     # If "reset" is requested, reload fml after
     ######################
     if [[ " $@ " == *" reset "* && -z "${autobuild}" ]] ; then
+        local get_fml_lua_script
         get_fml_lua_script='for key, subTable in pairs(_ModuleTable_.mT) do
           if type(subTable) == "table" and subTable.fn then
             local prefix, suffix = subTable.fn:match("^(.-/)(fml/[^/]+)%.lua$")
@@ -238,6 +230,7 @@ function __fml_load() {
           end 
         end '
 
+        local fml_components
         fml_components=( $( (__fml_orig_module --mt ; echo "${get_fml_lua_script}" ) |&lua ) )
         
         # Perform the reset or purge command:
@@ -259,11 +252,12 @@ function __fml_load() {
     fi
 
     old_fml_info=( $(__fml_get_loaded_fml) )
+    status=$?
     old_fml_name="${old_fml_info[0]:-}"
     old_fml_modfile="${old_fml_info[2]:-}"
 
     # If old_fml_name returned an error code (integer less than 0) something went wrong (oooops)
-    if [[ "${old_fml_info[0]:-}" =~ ^-?[0-9]+$ && "${old_fml_info[0]:-}" -lt 0 ]] ; then
+    if [[ "${status}" -ne 0 ]] ; then
         echo 'ERROR: Corrupted fml environment :' >&2
         __fml_orig_module list
         return
@@ -272,6 +266,7 @@ function __fml_load() {
     # Check to be sure we are starting from a fresh environment (no other loaded modules or fast modules);
     #  otherwise there can be pathologies.
 
+    fml_skip=0
     if [[ -n "${old_fml_name}" && "${old_fml_name}" != '0' ]] ; then
         if [[ -n "${load_arguments[@]}" ]] ; then
             # fast module is loaded and more modules are requested
@@ -283,6 +278,7 @@ function __fml_load() {
                                  |& lua - | sort -n -k 1 \
                                  | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
                                            print $2;
+                                           lastln=NR;
                                          }}
                                          {arg2=$2}
                                          END {if(NR != lastln) print arg2}' ) )
@@ -291,9 +287,10 @@ function __fml_load() {
             # echo 'Additional module(s) : '"${load_arguments[@]}" >&2
             # echo '  will be loaded on top' >&2
             __fml_unpack "${old_fml_modfile}"
+            fml_skip=1
         fi
     fi
-        
+
     if [[ "${autobuild}" -eq '1' \
               && ( "${old_fml_name}" == '0' || -n "${ordered_module_list[@]}" ) ]] ; then
         # Trying to build fast module with modules already present
@@ -313,7 +310,7 @@ function __fml_load() {
             echo 'Slow-loading this environment because additional modules were already loaded;' >& 2
             echo 'To create a fast module for this environment, do "module reset" followed by:' >&2
             echo "    fml ${ordered_module_list[@]} ${load_arguments[@]}" >&2
-            autobuild=''
+            fml_skip=1
         else
             echo 'FML!' >&2
             return 1
@@ -322,8 +319,8 @@ function __fml_load() {
         
     fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
 
-    if [[ -z "${fml_info[0]}" || "$?" -ne '0' ]] ; then
-        # echo 'FML did not recognize the requested modules; reverting to Lmod: module load '"${load_arguments[@]}" >&2
+    if [[ "${fml_skip}" -ne 0 || -z "${fml_info[0]}" || "$?" -ne '0' ]] ; then
+        # Revert to lmod functions
         echo "__fml_orig_module ${@:1} ; "
         return
     fi
@@ -341,20 +338,22 @@ function __fml_load() {
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
         echo "Fast Module Loading : fml-${requested_fml_name}   (use 'module -fml' to disable)" >&2
         echo "__fml_orig_module use $(dirname ${fml_filename}) ; "
-        echo "__fml_orig_module load fml-${requested_fml_name}"
+        echo "__fml_orig_module load fml-${requested_fml_name} ; "
+        echo "[[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
     else
         if [[ "${update_needed}" -eq '0' ]] ; then
             :
             # echo 'Fast module check:'" ${load_arguments[@]}" >&2
         fi
-
-        # Request a module load, also recording the time and exit status
+        # Request a module load, also recording the output, load time and exit status
+        echo "mkdir -p $(dirname ${fml_filename} ) ; "
         echo '__fml_start=$(date +%s) ; '
-        echo "__fml_orig_module ${@:1} ; "
+        echo "__fml_orig_module ${@:1} >& ${fml_filename%.lua}.out ; "
         echo '__fml_status=$? ; __fml_end=$(date +%s) ; '
+        echo "cat ${fml_filename%.lua}.out ; "
 
         if [[ -n "${autobuild}" || "${update_needed}" -eq '1' ]] ; then
-            echo '__fml_build_request=( "'"${requested_fml_name}"'" "'"${fml_filename}"'" )'
+            echo '__fml_build "'"${requested_fml_name}"'" "'"${fml_filename}"'" ; '
         fi
     fi
 }
@@ -437,34 +436,12 @@ function __fml_build() {
     local ordered_module_list
     local m
     local runtime
-    local build_lua_record
-    local process_collection_lua_script
     
-    ##################
-    # Bash command to save file info, including the full contents, size, and date,
-    #  for the set of lua modulefiles that defines a shortcut; this is used 
-    #  to test if any of them changed, meaning the shortcut should be rebuilt.
-    # Bash code is saved in string form to be executed later.
-    # When executed, it will require that the list of module files, $ordered_module_list, be set already.
-    ##################
-    build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
-    
-    ##################
-    # lua script for extracting the list of module files, in the correct build order.
-    # This obtains a list of lua modulefiles from an lmod-style module table (lua code)
-    # Used to get 'ordered_module_list'
-    ##################
-    process_collection_lua_script='
-    for key, subTable in pairs(_ModuleTable_.mT) do 
-      if type(subTable) == "table" and subTable.fn then
-        print(subTable.loadOrder, subTable.fn) 
-      end 
-    end '
-        
     runtime=$( echo ${__fml_start:-} ${__fml_end:-} | awk '{print $2 - $1}' )
     unset __fml_start
     unset __fml_end
 
+    __fml_build_request=("${@:1}")
     if [[ -z "${__fml_build_request[@]}" ]] ; then
         return
     fi
@@ -520,6 +497,7 @@ function __fml_build() {
     #  fast module, which would presumably also get flagged, in an
     #  infinite recursion. This was confirmed (well, discovered) in testing.
     __fml_orig_module load $(basename "${fml_filename%.lua}")
+    # cat "${fml_filename%.lua}.out"
 }
 
 function __fml_unpack() {
@@ -527,11 +505,13 @@ function __fml_unpack() {
     local status
     local fml_file
 
+    status=0
     if [[ $# -gt 0 ]] ; then        
         fml_file="$1"
     else
         # with no arguments given, get the loaded fast module if present
         fml_info=( $(__fml_get_loaded_fml) )
+        status=$?
         fml_name=${fml_info[0]}
         fml_file=${fml_info[2]}
 
@@ -539,9 +519,10 @@ function __fml_unpack() {
         if [[ -z "${fml_file}" ]] ; then
             return
         fi
-        if [[ -n "${fml_name}" && "${fml_info[0]}" != '0' ]] ; then # fast modules present
-            __fml_orig_module unload fml-${fml_name}
-        fi
+        
+        # if [[ -n "${fml_name}" && "${fml_info[0]}" != '0' ]] ; then # fast modules present
+        #     __fml_orig_module unload fml-${fml_name}
+        # fi
     fi
     mt_file="${fml_file%.lua}.mt"
     
@@ -567,6 +548,15 @@ function __fml_unpack() {
 
 function __fml_get_load_arguments() {
     local load_arguments
+
+    while [[ "$1" == '--fmldebug' ]] ; do
+        case "$1" in
+            --fmldebug)
+                shift
+                break
+                ;;
+        esac
+    done
     
     load_arguments=( $(echo "${@:1}" | awk '{
          for(i=1; i<=NF; ++i) {
@@ -640,7 +630,12 @@ function __fml_get_loaded_fml() {
                                     }
                                   }') )    
     echo "${old_fml_name[@]}"
-    return
+
+    if [[ "${old_fml_name[0]:-}" =~ ^-?[0-9]+$ && "${old_fml_name[0]:-}" -lt 0 ]] ; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 function __fml_get_load_info() {
