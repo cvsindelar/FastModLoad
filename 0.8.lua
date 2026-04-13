@@ -17,12 +17,10 @@ local root = "/vast/palmer/home.mccleary/cvs2/programs/FastModLoad"
 local script = pathJoin(root, "fml.sh")
 
 if myShellType() == "sh" then
-  execute {cmd="source " .. script, modeA={"load"}}
-  execute {cmd="echo '' >&2", modeA={"load"}}
-  execute {cmd="echo 'Fast Module Loading activated.' >&2", modeA={"load"}}
-  execute {cmd="echo Note: to turn off Fast Module Loading, do 'module purge' or 'module unload fml'  >&2", modeA={"load"}}
+  -- execute {cmd="eval \"$( bash " .. script .. " init " .. pathJoin(myModuleName(), myModuleVersion()) .. " )\" ", modeA={"load"}}
+  execute {cmd="eval \"$( bash " .. script .. " " .. myFileName() .. " init " .. " )\" ; ", modeA={"load"}}
 
-  execute {cmd = "__fml_exit", modeA = {"unload"}}
+  execute {cmd="eval $( bash " .. script .. " " .. myFileName() .. " exit " .. " ) ; ", modeA={"unload"}}
 else
   execute {cmd="echo 'FML: sorry, this is not implemented for shell type ".. myShellType() .. "' >&2", modeA={"load"}}
 end
