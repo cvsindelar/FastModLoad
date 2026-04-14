@@ -502,7 +502,7 @@ function __fml_build() {
     ordered_module_list=( $( (module --mt ; echo "${process_collection_lua_script}" ) |&lua - | sort -n -k 1 | awk '{n=split($2, a, "/") ; if(a[n] != "StdEnv.lua" && a[n-1] != "fml") {print $2}}' ) )
     
     stat "${ordered_module_list[@]}" &>/dev/null \
-	 && eval "$build_lua_record" > "${tmpfile3}"
+	&& eval "$build_lua_record" > "${tmpfile3}"
 
     printf '' > "${tmpfile2}"
     for m in ${ordered_module_list[@]}; do
