@@ -389,7 +389,6 @@ function __get_fml_filename() {
                                                  if(a[n] != "StdEnv.lua" && a[n-1] != "fml") {
                                                    print $2
                                                  }}' ) )
-                # echo eval ${build_lua_record} '| cmp '${fml_filename%.lua}.lua_record >&2 # >& /dev/null
                 stat "${ordered_module_list[@]}" &>/dev/null \
 		    && eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
                 update_needed=$?
@@ -476,7 +475,8 @@ function __fml_build() {
     module --mt >& "${tmpfile1}"
     ordered_module_list=( $( (module --mt ; echo "${process_collection_lua_script}" ) |&lua - | sort -n -k 1 | awk '{n=split($2, a, "/") ; if(a[n] != "StdEnv.lua" && a[n-1] != "fml") {print $2}}' ) )
     
-    eval "$build_lua_record" > "${tmpfile3}"
+    stat "${ordered_module_list[@]}" &>/dev/null \
+	 && eval "$build_lua_record" > "${tmpfile3}"
 
     printf '' > "${tmpfile2}"
     for m in ${ordered_module_list[@]}; do
