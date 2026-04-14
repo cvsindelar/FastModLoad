@@ -1,14 +1,12 @@
 # Remaining features to implement:
 
 # Priority #1
-# 1. fml --global to copy fast module builds to the global directory, if user has write permissions.
-# 2. "module list" -> prints the archived output of the original module load
+# 1. "module list" -> prints the archived output of the original module load
 #    -> append the raw lmod 'module list' results
-# 3. 'fml' with no args converts the currently loaded module into a fast module
 
 # Priority #2
-# 5: consolidate __fml_get_load_info into __get_fml_filename
-# 6. Warn when including conda/miniconda in a fast module
+# 3. 'fml' with no args converts the currently loaded module into a fast module
+# 4. Warn when including conda/miniconda in a fast module
 
 Priority #3
 

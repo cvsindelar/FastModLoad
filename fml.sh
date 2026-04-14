@@ -3,8 +3,8 @@
 # Chuck Sindelar, Yale Center for Research Computing (March 2026)
 ######################
 
-set -e
-set -u
+# set -e
+# set -u
 
 function bailout() {
     echo "if [[ -n \$( declare -f module | grep fml ) ]] ; then "
@@ -17,7 +17,7 @@ function bailout() {
     echo "fi ; "
 }
 
-trap bailout ERR
+# trap bailout ERR
 
 export FML_THRESH=5
 
@@ -124,16 +124,13 @@ function __fml_run() {
             --fmlautobuild)
                 autobuild=1
                 shift
-                break
                 ;;
             --fmlglobal)
-                fmlglobal=1
+                fmlglobal='--fmlglobal'
                 shift
-                break
                 ;;
             --fmldebug)
                 shift
-                break
                 ;;
         esac
     done
@@ -180,29 +177,36 @@ function __fml_run() {
     fml_skip=0
     # Check if fast module is loaded and more modules are requested
     if [[ -n "${old_fml_name}" && "${old_fml_name}" != '0' && -n "${load_arguments[@]}" ]] ; then
+	fml_skip=1
 
-        #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
-        #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
-        #     (R-bundle-Bioconductor) just to print something
-        ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
-                              echo "${module_names_from_mt_lua_script}" ) \
-                             |& lua - | sort -n -k 1 \
-                             | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-                                       print $2;
-                                       lastln=NR;
-                                     }}
-                                     {arg2=$2}
-                                     END {if(NR != lastln) print arg2}' ) )
-        
-        # echo 'Unpacking fast module '"fml-${old_fml_name} :" >&2
-        # echo "   ${ordered_module_list[@]}" >&2
-        # echo 'Additional module(s) : '"${load_arguments[@]}" >&2
-        # echo '  will be loaded on top' >&2
-        # echo 'module list ; echo blarch ; '
-        __fml_unpack "${old_fml_modfile}"
-        # echo 'module list ; echo blarch ; '
+	# If the requested modules actually exist, unpack the existing fast module
+	#  to get ready to load the new ones
+	fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
+	if [[ "${#fml_info[@]}" -gt 0 && "$?" -eq '0' ]] ; then
 
-        fml_skip=1
+	    # For error message printing, get the original list of user-requested modules
+	    #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
+	    #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
+	    #     (R-bundle-Bioconductor) just to print something
+	    ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
+				  echo "${module_names_from_mt_lua_script}" ) \
+				 |& lua - | sort -n -k 1 \
+				 | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
+					   print $2;
+					   lastln=NR;
+					 }}
+					 {arg2=$2}
+					 END {if(NR != lastln) print arg2}' ) )
+
+	    echo "echo 'Unpacking the module environment for: '${old_fml_name}"
+	    __fml_unpack "${old_fml_modfile}"
+	    if [[ $? -ne 0 ]] ; then
+		echo 'echo "Warning: unable to restore the full lmod environment"'
+		echo 'return 1'
+	    fi
+
+	    fml_skip=1
+	fi
     fi
 
     if [[ "${autobuild}" -eq '1' \
@@ -242,8 +246,8 @@ function __fml_run() {
         return
     fi
 
-    # echo "echo blarchifer __fml_get_load_info ${load_arguments[@]}" >&2
-    fml_filename_info=( $( __get_fml_filename ${fml_info[@]} ) )
+    # echo echo blarchifer __get_fml_filename ${fmlglobal} ${fml_info[@]}
+    fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )
     if [[ ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
         requested_fml_name="${fml_filename_info[1]}"
@@ -260,7 +264,7 @@ function __fml_run() {
 
     # Load the fast module if it exists.
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
-        echo "Fast Module Loading : fml-${requested_fml_name}   (use 'module -fml' to restore full module list)" >&2
+        echo "Fast Module Loading : fml-${requested_fml_name}   (use 'module fml' to unpack the full environment)" >&2
         
         #  Note, we take care to use Lmod's original functions to do this
         echo "if [[ -z \$( declare -f module | grep fml ) ]] ; then "
@@ -351,7 +355,14 @@ function __get_fml_filename() {
     local suffix
     local fml_filename
     local ordered_module_list
+    local fmlglobal
     
+    fmlglobal=
+    if [[ $# -gt 0 && "$1" == "--fmlglobal" ]] ; then
+        fmlglobal=1
+        shift
+    fi
+        
     fml_info=( "${@:1}" )
     requested_fml_name="${fml_info[0]}"
     requested_modfiles="${fml_info[@]:1}"
@@ -396,7 +407,7 @@ function __get_fml_filename() {
                     suffix=$(echo ${suffix} | awk '{print("___" substr($1, 4, length($1)-3) + 1) }')
                 fi
                 echo 'Fast module seems to be out of date: ' "${fml_filename}" >&2
-                echo ' -> next up: ' "${fml_basename}${suffix}" >&2
+                echo ' -> next up: ' "${requested_fml_name}${suffix}" >&2
             fi
             # Update fml_filename for the while loop:
             fml_filename="${fml_dir}/${requested_fml_name}${suffix}/fml-${requested_fml_name}.lua"
@@ -569,7 +580,6 @@ function __fml_unpack() {
     fi
 
     if [[ "${status}" -ne 0 ]] ; then
-        echo 'FML1!' >&2
         return "${status}"
     fi
 }
@@ -607,7 +617,7 @@ function __fml_get_loaded_fml() {
     #    - multiple fast fml-xxx modules
     local loaded_fml_name
     
-    loaded_fml_name=( $( (module --mt ; echo "${get_short_loaded_lua}") \
+    loaded_fml_name=( $( (module --mt ; echo "${process_collection_lua_script}") \
                                |& lua - | sort -n -k 1 | awk '
                                   {
                                    n=split($2, a, "/");
@@ -651,7 +661,8 @@ function __fml_get_loaded_fml() {
     echo "${loaded_fml_name[@]}"
 
     if [[ "${loaded_fml_name[0]:-}" =~ ^-?[0-9]+$ && "${loaded_fml_name[0]:-}" -lt 0 ]] ; then
-        echo 'FML2!' >&2
+        echo 'FastModLoad internal error: mismatched module environment detected: ' >&2
+	module list
         return 1
     else
         return 0
@@ -670,21 +681,23 @@ function __fml_get_load_info() {
     local new_fml_part
     
     load_arguments=
-    requested_modfiles=
+    requested_modfiles=()
     for arg in "${@:1}" ; do
         module_info=( $(__fml_get_module_info ${arg}) )
         status="$?"
+	if [[ ${#module_info[@]} -lt 2 || ${status} -ne 0 ]] ; then
+	    break
+	fi
         # if [[ -z "${module_info[@]}" || "${status}" -ne 0 ]] ; then
         #     return -1
         # fi
-
+	# ${#module_info[@]} noo ${module_info[0]} nee >&2
         load_arguments=( ${load_arguments[@]} ${module_info[0]} )
         requested_modfiles=( ${requested_modfiles[@]} ${module_info[1]} )
     done
 
     # If we can't find all the requested modules, flag an error
-    if [[ ${#requested_modfiles[@]} -ne $# ]] ; then
-        echo 'FML3!' >&2
+    if [[ "${#requested_modfiles[@]}" -ne $# ]] ; then
         return 1
     fi
 
@@ -765,8 +778,7 @@ function __fml_get_module_info() {
             echo "${mod_prefix}${fullmod}" "${modfile}"
         fi
     else
-        echo 'FML4!' >&2
-        return 1
+        return
     fi
 }
 
@@ -779,13 +791,16 @@ if [[ $# -ge 1 ]] ; then
     case "$1" in
         fml)
             shift
-    
-            __fml_run "${fml_fullname}" --fmlautobuild load "${@:1}"
+	    fmlglobal=
+	    if [[ $# -ge 1 && "$1" == "--global" ]] ; then
+		shift
+		fmlglobal='--fmlglobal'
+	    fi
+            __fml_run "${fml_fullname}" --fmlautobuild "${fmlglobal}" load "${@:1}"
             ;;
         
         module)
             shift
-
             __fml_start=0
             __fml_end=0
 
@@ -806,7 +821,12 @@ if [[ $# -ge 1 ]] ; then
         exit)
             echo '[[ -n $( declare -f module | grep fml ) ]] && module --fmlrestore ; '
             echo '[[ -n $( declare -f fml ) ]] && unset -f fml ; '
+	    # echo 'echo "Unpacking the module environment"'
             __fml_unpack "${fml_fullname}" --nofml
+	    if [[ $? -ne 0 ]] ; then
+		echo 'echo "Warning: unable to restore the full lmod environment"'
+		echo 'return 1'
+	    fi
             ;;
         
         init)
