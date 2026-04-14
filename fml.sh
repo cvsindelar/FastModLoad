@@ -164,10 +164,18 @@ function __fml_run() {
         __fml_execute "${@:1}"
         return
     fi
+
+    # Get first requested module minus any version spec
+    first_mod_spec=$(echo ${load_arguments[0]} | awk '{sub("[/].*", "", $0) ; print($1)}')
     
-    if [[ "${autobuild}" -eq 0 \
-              && -z $( ls ${fml_global_prebuilds_dir}/${load_arguments[0]}_* \
-                          ${fml_prebuilds_dir}/${load_arguments[0]}_* 2> /dev/null ) ]] ; then
+    # Skip to the Lmod module function if all these conditions are true::
+    #   (1) The user is just trying to load a module, not build one
+    #   (2) There is no fast module corresponding to the module request
+    #   (3) There are no loaded fast modules
+        if [[ "${autobuild}" -eq 0 \
+              && -z $( module --terse list |& grep '^fml[-]' ) \
+              && -z $( ls ${fml_global_prebuilds_dir}/${first_mod_spec}_* \
+                          ${fml_prebuilds_dir}/${first_mod_spec}_* 2> /dev/null ) ]] ; then
         echo 'echo "Lmod: module ${@:1}"'
         __fml_execute "${@:1}"
         return
@@ -197,7 +205,7 @@ function __fml_run() {
 	#  to get ready to load the new ones
 	fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
 	if [[ "${#fml_info[@]}" -gt 0 && "$?" -eq '0' ]] ; then
-
+            echo blarchifer &>2
 	    # For message printing, get the original list of user-requested modules
 	    #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
 	    #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
