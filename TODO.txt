@@ -3,10 +3,13 @@
 # Priority #1
 # 1. "module list" -> prints the archived output of the original module load
 #    -> append the raw lmod 'module list' results
+# 2. --help function
+# 3. Fix the easybuild
+# 4. Github README
 
 # Priority #2
-# 3. 'fml' with no args converts the currently loaded module into a fast module
-# 4. Warn when including conda/miniconda in a fast module
+# 4. 'fml' with no args converts the currently loaded module into a fast module
+# 5. Warn when including conda/miniconda in a fast module
 
 Priority #3
 
