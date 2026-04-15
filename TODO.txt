@@ -1,11 +1,9 @@
 # Remaining features to implement:
 
 # Priority #1
-# 1. "module list" -> prints the archived output of the original module load
-#    -> append the raw lmod 'module list' results
-# 2. --help function
-# 3. Fix the easybuild
-# 4. Github README
+# 1. --help function
+# 2. Fix the easybuild
+# 3. Github README
 
 # Priority #2
 # 4. 'fml' with no args converts the currently loaded module into a fast module
@@ -13,7 +11,9 @@
 
 Priority #3
 
-# 7. Implement tcsh/csh functionality ; 
+# 5. Prioritize user's .config fast modules over global ones if both exist
+
+# 6. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
@@ -24,8 +24,7 @@ Priority #3
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# Very optional:
-# 8. Auto-deleting local fast module builds when they are identical to the global builds
+# 7. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
@@ -35,7 +34,7 @@ Priority #3
 #    activate.d fails the first time around (env is not activated)
 #    This is because fml cannot load this second module without first unloading the entire fast module.
 #    This unloads the miniconda fast module in the midst of a conda activate command!!
-#    At least, could succeeds with the second try if fml automatically restores the slow environment.
+#    This does, however succeed with the second try B/C fml automatically restores the slow environment.
 #    Example: /home/cvs2/.conda/envs/fil_new/etc/conda/activate.d/env_vars.sh
-#    ml fml/2 ; export FML_THRESH=0 ; ml miniconda ; ml reset ; ml miniconda ; conda activate fil_new
+#    ml fml/0 ; export FML_THRESH=0 ; ml miniconda ; ml reset ; ml miniconda ; conda activate fil_new
 
