@@ -170,7 +170,7 @@ function __fml_execute() {
             fi
             if [[ -n "${list_file}" ]] ; then
                 cat "${list_file%.list}.fancy_list" >&2
-                echo 'Note, this is an emulated environment: fml-'${fml_name} "(use 'ml fml' to restore the original)" >&2
+                echo 'Note, this is an emulated environment: fml-'${fml_name} "    (use 'ml fml' to restore the original)" >&2
                 echo '' >&2
                 
                 # echo 'True Lmod environment:' >&2
@@ -274,7 +274,7 @@ function __fml_execute() {
 					 {arg2=$2}
 					 END {if(NR != lastln) print arg2}' ) )
 
-	    echo "echo 'Unpacking the module environment for: fml-'${old_fml_name}"
+	    echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
 	    __fml_unpack "${old_fml_modfile}"
 	    if [[ $? -ne 0 ]] ; then
 		echo 'echo "Warning: unable to restore the full lmod environment"'
@@ -350,6 +350,8 @@ function __fml_execute() {
         echo "mkdir -p $(dirname ${fml_filename} ) ; "
         echo '__fml_start=$(date +%s) ; '
         
+        echo 'Fast Module Build : '"fml-${requested_fml_name}" >&2
+    
         __lmod_execute "${@:1} >& ${fml_filename%.lua}.out"
         
         echo '__fml_status=$? ; __fml_end=$(date +%s) ; '
@@ -524,7 +526,7 @@ function __fml_build() {
     if [[ $# -lt 2 ]] ; then
         return
     fi
-    
+
     mod_name="$1"
     mod_filename="$2"
 
@@ -577,8 +579,6 @@ function __fml_build() {
     /bin/mv "${tmpfile1}" "${mod_filename%.lua}.mt"
     /bin/mv "${tmpfile2}" "${mod_filename}"
     /bin/mv "${tmpfile3}" "${mod_filename%.lua}".lua_record
-
-    echo 'Fast module updated : '"${mod_name}" >&2
 
     # Now replace the slow-loading environment with the fast module
     __fml_reset --quiet "${fml_source_modfile}" purge
