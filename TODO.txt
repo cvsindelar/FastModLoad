@@ -1,17 +1,15 @@
 # Remaining features to implement:
 
 # Priority #1
-# 1. --help function
-# 2. Fix the easybuild
-# 3. Github README
+# 1. Permissions check for --global option
+# 2. Github README
 
 # Priority #2
+# 3. Prioritize user's .config fast modules over global ones if both exist
 # 4. 'fml' with no args converts the currently loaded module into a fast module
 # 5. Warn when including conda/miniconda in a fast module
 
 Priority #3
-
-# 5. Prioritize user's .config fast modules over global ones if both exist
 
 # 6. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
