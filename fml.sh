@@ -168,18 +168,21 @@ function __fml_execute() {
             elif [[ -f "${tmp2}" ]] ; then
                 list_file="${tmp2}"
             fi
+
             if [[ -n "${list_file}" ]] ; then
-                cat "${list_file%.list}.fancy_list" >&2
-                    # | awk '/Currently Loaded Modules:/ {getline; printing=1} printing == 1' >&2
-                echo "FastModLoad Emulated Environment:">&2
-                echo "    fml-${fml_name}" >&2
-                echo '' >&2
-                echo "Use 'ml fml' to unpack the original Lmod environment" >&2
-                echo "Use 'module --lmod list' to peek at the current (true) Lmod environment" >&2
-                echo '' >&2
-                
-                return
-            fi
+		cat <<EOF
+"\${list_file%.list}.fancy_list"
+    # | awk '/Currently Loaded Modules:/ {getline; printing=1} printing == 1'
+echo "FastModLoad Emulated Environment:"
+echo "    fml-${fml_name}"
+echo ''
+echo "Use 'ml fml' to unpack the original Lmod environment"
+echo "Use 'module --lmod list' to peek at the current (true) Lmod environment"
+echo ''
+EOF
+            else
+		module list
+	    fi
             return
         fi
     fi
