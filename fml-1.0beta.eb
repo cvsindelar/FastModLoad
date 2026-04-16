@@ -1,0 +1,32 @@
+easyblock = 'Tarball'
+
+name = 'fml'
+version = '1.0beta'
+
+homepage = 'https://github.com/cvsindelar/FastModLoad'
+description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
+
+toolchain = SYSTEM
+
+source_urls = ['https://github.com/cvsindelar/fml/archive/refs/tags/']
+sources = ['v%(version)s.tar.gz']
+
+start_dir = 'fml-%(version)s'
+
+sanity_check_paths = {
+    'files': ['fml.sh'],
+    'dirs': ['.'],
+}
+
+modluafooter = '''
+local script = pathJoin(root, "fml.sh")
+
+if myShellType() == "sh" then
+  execute {cmd="eval \"$( bash " .. script .. " " .. myFileName() .. " init " .. " )\" ; ", modeA={"load"}}
+  execute {cmd="eval $( bash " .. script .. " " .. myFileName() .. " exit " .. " ) ; ", modeA={"unload"}}
+else
+  execute {cmd="echo 'FML: sorry, this is not implemented for shell type ".. myShellType() .. "' >&2", modeA={"load"}}
+end
+'''
+
+moduleclass = 'tools'

@@ -32,7 +32,7 @@ fi
 ##########################
 
 # Load time threshold to print fml reminders:
-export FML_THRESH=5
+export FML_THRESH=1
 
 # Location of the script and its default shortcut library
 fml_base_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -137,7 +137,7 @@ function __fml_execute() {
     autobuild=''
     fmlglobal=''
     fmldebug=''
-    while [[ "$1" == '--fmlautobuild' || "$1" == '--fmlglobal' || "$1" == '--fmldebug' ]] ; do
+    while [[ "${1:-}" == '--fmlautobuild' || "${1:-}" == '--fmlglobal' || "${1:-}" == '--fmldebug' ]] ; do
         case "$1" in
             --fmlautobuild)
                 autobuild=1
@@ -170,13 +170,14 @@ function __fml_execute() {
             fi
             if [[ -n "${list_file}" ]] ; then
                 cat "${list_file%.list}.fancy_list" >&2
-                echo 'Note, this is an emulated environment: fml-'${fml_name} "    (use 'ml fml' to restore the original)" >&2
+                    # | awk '/Currently Loaded Modules:/ {getline; printing=1} printing == 1' >&2
+                echo "FastModLoad Emulated Environment:">&2
+                echo "    fml-${fml_name}" >&2
+                echo '' >&2
+                echo "Use 'ml fml' to unpack the original Lmod environment" >&2
+                echo "Use 'module --lmod list' to peek at the current (true) Lmod environment" >&2
                 echo '' >&2
                 
-                # echo 'True Lmod environment:' >&2
-                # module --redirect --terse list | awk '{print "  "$0}' "${list_file}" >&2
-                # echo 'Emulated Lmod environment: fml-'${fml_name} "(use 'ml fml' to unpack the full environment)" >&2
-                # awk '{print "  "$0}' "${list_file}" >&2
                 return
             fi
             return
@@ -188,6 +189,7 @@ function __fml_execute() {
     ######################
     if [[ " $@ " == *" reset "* ]] ; then
         __fml_reset "${fml_source_modfile}" reset
+        # module reset
         return
     fi
 
@@ -207,7 +209,8 @@ function __fml_execute() {
           && -n $( ls ${fml_global_prebuilds_dir}/${first_load_arg}* \
                            ${fml_prebuilds_dir}/${first_load_arg}* 2> /dev/null ) \
         ]] ; then
-        echo "Fast Module Loading: ${@:2}    (use 'ml fml' to unpack the full environment)" >&2
+        :
+        # echo "Fast Module Check: ${@:2}    (use 'ml fml' to unpack the full environment)" >&2
     fi
     
     ######################
@@ -334,13 +337,15 @@ function __fml_execute() {
     ######################
     # Perform specialized load/unloading actions
     ######################
-
+        
     # Load the fast module if it exists.
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
         __lmod_execute "use $(dirname ${fml_filename})"
         __lmod_execute "load fml-${requested_fml_name}"
-        
+
         echo "[[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
+        echo "Fast Module Load: ${requested_fml_name}" >&2
+        #     (use 'ml fml' to unpack the full environment)
     else
         if [[ "${update_needed}" -eq '0' ]] ; then
             :
@@ -348,13 +353,15 @@ function __fml_execute() {
         fi
         # Request a module load, also recording the output, load time and exit status
         echo "mkdir -p $(dirname ${fml_filename} ) ; "
-        echo '__fml_start=$(date +%s) ; '
+
         
-        echo 'Fast Module Build : '"fml-${requested_fml_name}" >&2
+        if [[ -n "${autobuild}" ]] ; then
+            echo 'Fast Module Build : '"fml-${requested_fml_name}" >&2
+        fi
     
         __lmod_execute "${@:1} >& ${fml_filename%.lua}.out"
         
-        echo '__fml_status=$? ; __fml_end=$(date +%s) ; '
+        echo '__fml_status=$? '
         echo "cat ${fml_filename%.lua}.out ; "
 
         if [[ -n "${autobuild}" || "${update_needed}" -eq '1' ]] ; then
@@ -371,9 +378,11 @@ function __lmod_execute() {
 
     cat <<EOF
 if [[ -z \$( declare -f module | grep fml ) ]] ; then
+    echo blarch1 ${@:1}
     module ${@:1} ; 
 else
-    module --fmlorig ${@:1} ;
+    echo blarch2 ${@:1}
+    module --lmod ${@:1} ;
 fi ;
 EOF
 }
@@ -390,7 +399,7 @@ function __fml_reset() {
     local quiet
 
     quiet=0
-    if [[ $# -gt 0 && "$1" == "--quiet" ]] ; then
+    if [[ "$1" == "--quiet" ]] ; then
         quiet=1
         shift
     fi
@@ -434,7 +443,7 @@ function __get_fml_filename() {
     local fmlglobal
     
     fmlglobal=
-    if [[ $# -gt 0 && "$1" == "--fmlglobal" ]] ; then
+    if [[ "${1:-}" == "--fmlglobal" ]] ; then
         fmlglobal=1
         shift
     fi
@@ -496,7 +505,7 @@ function __get_fml_filename() {
         # Skip the second pass of this loop ($fml_basename == $fml2_user) if we are doing a global install.
         #  This means we are going to rebuild the global fastmodule 
         if [[ -n "${fmlglobal}" ]] ; then
-            echo '(Re)building the global fast module: ' "${fml_filename}" >&2
+            echo '(Re)building the global fast module: ' "${requested_fml_name}" >&2
             break
         fi
     done
@@ -582,6 +591,7 @@ function __fml_build() {
 
     # Now replace the slow-loading environment with the fast module
     __fml_reset --quiet "${fml_source_modfile}" purge
+    # module reset
 
     # Restore fml
     __lmod_execute "use $(dirname ${mod_filename})"
@@ -865,6 +875,16 @@ if [[ $# -ge 1 ]] ; then
     case "$1" in
         fml)
             shift
+            if [[ $# -ge 1  && "$1" == "--help" ]] ; then
+                shift
+                echo 'Usage: fml [--help] [--global] <module 1> [<module 1> ...]' >&2
+                echo '' >&2
+                echo 'Options:' >&2
+                echo '--help           This help message' >&2
+                echo "--global         Make the new fast module available to all users" >&2
+                echo '' >&2
+            fi
+            
 	    fmlglobal=
 	    if [[ $# -ge 1 && "$1" == "--global" ]] ; then
 		shift
@@ -875,15 +895,8 @@ if [[ $# -ge 1 ]] ; then
         
         module)
             shift
-            __fml_start=0
-            __fml_end=0
-
+            echo splarbarooni "${@:1}" >&2
             __fml_execute "${fml_source_modfile}" "${@:1}"
-
-            runtime=$( echo ${__fml_start:-} ${__fml_end:-} | awk '{print $2 - $1}' )
-            if [[ "${runtime}" -ge $FML_THRESH ]] ; then
-                echo 'Slow load time detected : '${runtime}' sec' >&2
-            fi
             ;;
         
         build)
@@ -904,6 +917,7 @@ if [[ $# -ge 1 ]] ; then
             ;;
         
         init)
+            echo 'export __fml_placeholder=______'
             shift
             if [[ -z $( declare -f module | grep fml ) ]] ; then
 cat <<EOF
@@ -926,6 +940,12 @@ function fml () {
 
 # Hijack the Lmode module function:
 function module () {
+    :
+    local __fml_status
+    # local __fml_start
+    # local __fml_end
+    # local runtime
+
     # If requested, restore the original Lmod module function
     if [[ \$1 == "--fmlrestore" ]] ; then
         # Embed the original module code right here, so it will be restored
@@ -934,11 +954,7 @@ function module () {
     fi
 
     # If requested, fall through to the original Lmod module code, which is embedded after this 'if' clause
-    if [[ "\$1" == "--fmlorig" ]] ; then
-        shift
-    else
-        # Execute the augmented FastModLoad function fml.sh
-
+    if [[ "\$1" != "--lmod" ]] ; then
         # Optional debug flag '--fmldebug':
         local fmldebug
         fmldebug=0
@@ -946,6 +962,8 @@ function module () {
             shift
             fmldebug=1
         fi
+
+        # Logic to execute the augmented FastModLoad function fml.sh
 
         # We only run fml.sh if at least one of the following is true:
         #  (1) A module reset is requested (fml.sh handles this specially to reload fml)
@@ -963,7 +981,7 @@ function module () {
         first_load_arg=\$(echo "\$@" | \
           awk '\$1=="load" || \$1=="unload" {gsub("/", "_", \$2); if(\$2!="") print \$2; exit}')
 
-        terselist=\$(module --fmlorig --terse list 2>&1 )
+        terselist=\$(module --lmod --terse list 2>&1 )
 
         # Execute fml.sh, if the three above conditions are met
         if [[ " \$@ " == *" reset "* \
@@ -973,33 +991,40 @@ function module () {
                    && -n \$( ls ${fml_global_prebuilds_dir}/\${first_load_arg}* \
                                 ${fml_prebuilds_dir}/\${first_load_arg}* 2> /dev/null ) ) \
            ]] ; then
+
             if [[ \${fmldebug} -eq 1 ]] ; then
-                shift
-                echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \${@:1})"
+                echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \${@:1})" >&2
             else
                 eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \${@:1})"
             fi
 
-            # We are done
-            return
+        else
+
+            # Otherwise, fml.sh wasn't executed and we fall through to the original Lmod module function
+
+            echo splarbetta >&2
+            __fml_start=\$(date +%s)
+            module --lmod \${@:1}
+            __fml_end=\$(date +%s)
+
+            runtime=\$( echo ${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
+            if [[ "\${runtime}" -ge $FML_THRESH ]] ; then
+                echo 'Slow load time detected : '\${runtime}' sec' >&2
+            fi
         fi
+        # We are done
+        return
+    else
+        shift
+        # Below, embed the original Lmod module code but without
+        #  the enclosing function name and curly brackets
 
-        # Otherwise, fml.sh wasn't executed and we fall through to the original embedded Lmod module code
+        $(declare -f module | awk 'NR > 1')
     fi
-
-    # Below, embed the original Lmod module code:
-    # Note, this embedded code implicitly completes the
-    #  above 'module' function definition. 
-    # This is because the awk command strips the leading '{'
-    #  from the definition produced by 'declare -f', causing the trailing '}'
-    #  to balance the '{' that begins our hijacked module definition
-
-    $(declare -f module | awk 'NR > 2')
-
-# } Closing curly bracket would be redundant with the preceding declare -f module statement
+}
 
 echo 'Fast Module Loading is active.'
-echo "Note: to turn off Fast Module Loading, do 'module purge' or 'module unload fml'"
+echo "Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'"
 
 EOF
             fi
