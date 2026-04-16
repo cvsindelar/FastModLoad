@@ -105,7 +105,7 @@ end '
 build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
 
 ######################
-# __fml_load() : the main fast module loading function
+# __fml_execute() : the main fast module loading function
 #  Output of consists of printed commands that will be executed
 #   by the calling shell (bash) process.
 ######################
@@ -1016,9 +1016,8 @@ function module () {
         return
     else
         shift
-        # Below, embed the original Lmod module code but without
-        #  the enclosing function name and curly brackets
 
+        # Below, embed the original Lmod module code but without the function name
         $(declare -f module | awk 'NR > 1')
     fi
 }
