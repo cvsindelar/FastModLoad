@@ -944,18 +944,18 @@ function module () {
     # local runtime
 
     # If requested, restore the original Lmod module function
-    if [[ \$1 == "--fmlrestore" ]] ; then
+    if [[ "\${1:-}"  == "--fmlrestore" ]] ; then
         # Embed the original module code right here, so it will be restored
         $(declare -f module)
         return
     fi
 
     # If requested, fall through to the original Lmod module code, which is embedded after this 'if' clause
-    if [[ "\$1" != "--lmod" ]] ; then
+    if [[ "\${1:-}"  != "--lmod" ]] ; then
         # Optional debug flag '--fmldebug':
         local fmldebug
         fmldebug=0
-        if [[ \$# -ge 1 && "\$1" == "--fmldebug" ]] ; then
+        if [[ "\${1:-}" == "--fmldebug" ]] ; then
             shift
             fmldebug=1
         fi
