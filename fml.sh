@@ -378,10 +378,8 @@ function __lmod_execute() {
 
     cat <<EOF
 if [[ -z \$( declare -f module | grep fml ) ]] ; then
-    echo blarch1 ${@:1}
     module ${@:1} ; 
 else
-    echo blarch2 ${@:1}
     module --lmod ${@:1} ;
 fi ;
 EOF
@@ -895,7 +893,6 @@ if [[ $# -ge 1 ]] ; then
         
         module)
             shift
-            echo splarbarooni "${@:1}" >&2
             __fml_execute "${fml_source_modfile}" "${@:1}"
             ;;
         
