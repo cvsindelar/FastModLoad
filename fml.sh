@@ -171,7 +171,7 @@ function __fml_execute() {
 
             if [[ -n "${list_file}" ]] ; then
 		cat <<EOF
-"\${list_file%.list}.fancy_list"
+cat "${list_file%.list}.fancy_list"
     # | awk '/Currently Loaded Modules:/ {getline; printing=1} printing == 1'
 echo "FastModLoad Emulated Environment:"
 echo "    fml-${fml_name}"
