@@ -999,7 +999,6 @@ function module () {
 
             # Otherwise, fml.sh wasn't executed and we fall through to the original Lmod module function
 
-            echo splarbetta >&2
             __fml_start=\$(date +%s)
             module --lmod \${@:1}
             __fml_end=\$(date +%s)
