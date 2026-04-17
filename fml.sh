@@ -32,7 +32,7 @@ fi
 ##########################
 
 # Load time threshold to print fml reminders:
-export FML_THRESH=1
+export FML_THRESH=10
 
 # Location of the script and its default shortcut library
 fml_base_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -985,7 +985,7 @@ function module () {
 
         # Execute fml.sh, if the three above conditions are met
         if [[ " \$@ " == *" reset "* \
-              || -n \$( echo "\${terselist}" | grep '^fml[-]' ) \
+              || \$( echo "\${terselist}" | grep '^fml[-]' ) \
               || ( -n \${first_load_arg} \
                    && -z \$( echo "\${terselist}" | grep -v '^StdEnv\$' |& grep -v '^fml[/]' ) \
                    && -n \$( ls ${fml_global_prebuilds_dir}/\${first_load_arg}* \
@@ -1005,9 +1005,11 @@ function module () {
             module --lmod \${@:1}
             __fml_end=\$(date +%s)
 
-            runtime=\$( echo ${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
+            runtime=\$( echo \${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
+
             if [[ "\${runtime}" -ge $FML_THRESH ]] ; then
-                echo 'Slow load time detected : '\${runtime}' sec' >&2
+                echo 'Slow load time detected ( '\${runtime}' sec ) ; Consider using fml to speed up loading of this module :' >&2
+		echo '    fml '\${@:2}
             fi
         fi
         # We are done
