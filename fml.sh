@@ -32,7 +32,7 @@ fi
 ##########################
 
 # Load time threshold to print fml reminders:
-export FML_THRESH=10
+export FML_THRESH=1
 
 # Location of the script and its default shortcut library
 fml_base_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -220,6 +220,9 @@ EOF
     # Set up fml load variables & check for errors
     ######################
 
+    echo '__fml_start=0'
+    echo '__fml_end=0'
+    
     load_arguments=( $(__fml_get_load_arguments "${@:1}") )
     if [[ -z "${autobuild}" && -z "${load_arguments[@]}" ]] ; then
         # If no load requested, pass the command through to Lmod
@@ -362,7 +365,9 @@ EOF
             echo 'Fast Module Build : '"fml-${requested_fml_name}" >&2
         fi
     
+        echo '__fml_start=$(date +%s)'
         __lmod_execute "${@:1} >& ${fml_filename%.lua}.out"
+        echo '__fml_end=$(date +%s)'
         
         echo '__fml_status=$? '
         echo "cat ${fml_filename%.lua}.out ; "
@@ -942,9 +947,12 @@ function fml () {
 function module () {
     :
     local __fml_status
-    # local __fml_start
-    # local __fml_end
-    # local runtime
+    local __fml_start
+    local __fml_end
+    local runtime
+
+    __fml_start=0
+    __fml_end=0
 
     # If requested, restore the original Lmod module function
     if [[ "\${1:-}"  == "--fmlrestore" ]] ; then
@@ -1005,13 +1013,15 @@ function module () {
             module --lmod \${@:1}
             __fml_end=\$(date +%s)
 
-            runtime=\$( echo \${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
-
-            if [[ "\${runtime}" -ge $FML_THRESH ]] ; then
-                echo 'Slow load time detected ( '\${runtime}' sec ) ; Consider using fml to speed up loading of this module :' >&2
-		echo '    fml '\${@:2}
-            fi
         fi
+
+	runtime=\$( echo \${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
+
+	if [[ "\${runtime}" -ge $FML_THRESH ]] ; then
+	    echo 'Slow load time detected ( '\${runtime}' sec ) ; Consider using fml to speed up loading of this module :' >&2
+	    echo '    fml '\${@:2}
+	fi
+
         # We are done
         return
     else
