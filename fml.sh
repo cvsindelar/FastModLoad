@@ -170,7 +170,7 @@ function __fml_execute() {
             fi
 
             if [[ -n "${list_file}" ]] ; then
-		cat <<EOF
+                cat <<EOF
 cat "${list_file%.list}.fancy_list"
     # | awk '/Currently Loaded Modules:/ {getline; printing=1} printing == 1'
 echo "FastModLoad Emulated Environment:"
@@ -181,8 +181,8 @@ echo "Use 'module --lmod list' to peek at the current (true) Lmod environment"
 echo ''
 EOF
             else
-		module list
-	    fi
+                module list
+            fi
             return
         fi
     fi
@@ -260,33 +260,33 @@ EOF
     fml_skip=0
     # Check if fast module is loaded and more modules are requested
     if [[ -n "${old_fml_name}" && "${old_fml_name}" != '0' && -n "${load_arguments[@]}" ]] ; then
-	fml_skip=1
+        fml_skip=1
 
-	# If the requested modules actually exist, unpack the existing fast module
-	#  to get ready to load the new ones
-	fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
-	if [[ "${#fml_info[@]}" -gt 0 && "$?" -eq '0' ]] ; then
-	    # For message printing, get the original list of user-requested modules
-	    #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
-	    #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
-	    #     (R-bundle-Bioconductor) just to print something
-	    ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
-				  echo "${module_names_from_mt_lua_script}" ) \
-				 |& lua - | sort -n -k 1 \
-				 | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-					   print $2;
-					   lastln=NR;
-					 }}
-					 {arg2=$2}
-					 END {if(NR != lastln) print arg2}' ) )
+        # If the requested modules actually exist, unpack the existing fast module
+        #  to get ready to load the new ones
+        fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
+        if [[ "${#fml_info[@]}" -gt 0 && "$?" -eq '0' ]] ; then
+            # For message printing, get the original list of user-requested modules
+            #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
+            #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
+            #     (R-bundle-Bioconductor) just to print something
+            ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
+                                  echo "${module_names_from_mt_lua_script}" ) \
+                                 |& lua - | sort -n -k 1 \
+                                 | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
+                                           print $2;
+                                           lastln=NR;
+                                         }}
+                                         {arg2=$2}
+                                         END {if(NR != lastln) print arg2}' ) )
 
-	    echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
-	    __fml_unpack "${old_fml_modfile}"
-	    if [[ $? -ne 0 ]] ; then
-		echo 'echo "Warning: unable to restore the full lmod environment"'
-		echo 'return 1'
-	    fi
-	fi
+            echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
+            __fml_unpack "${old_fml_modfile}"
+            if [[ $? -ne 0 ]] ; then
+                echo 'echo "Warning: unable to restore the full lmod environment"'
+                echo 'return 1'
+            fi
+        fi
     fi
 
     # If ordinary Lmod modules are loaded, turn on fml_skip to skip fast module loading
@@ -298,7 +298,7 @@ EOF
         if [[ -n "${load_arguments[@]}" ]] ; then
             fml_skip=1
             if [[ "${old_fml_name}" == '0'  ]] ; then
-	        # For message printing, get the list of user-loaded Lmod modules
+                # For message printing, get the list of user-loaded Lmod modules
                 ordered_module_list=( $( ( module --mt ; \
                                            echo "${module_names_from_mt_lua_script}" ) \
                                          |& lua - | sort -n -k 1 \
@@ -476,7 +476,7 @@ function __get_fml_filename() {
                                                    print $2
                                                  }}' ) )
                 stat "${ordered_module_list[@]}" &>/dev/null \
-		    && eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
+                    && eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
                 update_needed=$?
             else
                 update_needed=1
@@ -574,7 +574,7 @@ function __fml_build() {
     ordered_module_list=( $( (module --mt ; echo "${process_collection_lua_script}" ) |&lua - | sort -n -k 1 | awk '{n=split($2, a, "/") ; if(a[n] != "StdEnv.lua" && a[n-1] != "fml") {print $2}}' ) )
     
     stat "${ordered_module_list[@]}" &>/dev/null \
-	&& eval "$build_lua_record" > "${tmpfile3}"
+        && eval "$build_lua_record" > "${tmpfile3}"
 
     printf '' > "${tmpfile2}"
     for m in ${ordered_module_list[@]}; do
@@ -745,7 +745,7 @@ function __fml_get_loaded_fml() {
 
     if [[ "${loaded_fml_name[0]:-}" =~ ^-?[0-9]+$ && "${loaded_fml_name[0]:-}" -lt 0 ]] ; then
         echo 'FastModLoad internal error: mismatched module environment detected: ' >&2
-	module list
+        module list
         return 1
     else
         return 0
@@ -768,13 +768,13 @@ function __fml_get_load_info() {
     for arg in "${@:1}" ; do
         module_info=( $(__fml_get_module_info ${arg}) )
         status="$?"
-	if [[ ${#module_info[@]} -lt 2 || ${status} -ne 0 ]] ; then
-	    break
-	fi
+        if [[ ${#module_info[@]} -lt 2 || ${status} -ne 0 ]] ; then
+            break
+        fi
         # if [[ -z "${module_info[@]}" || "${status}" -ne 0 ]] ; then
         #     return -1
         # fi
-	# ${#module_info[@]} noo ${module_info[0]} nee >&2
+        # ${#module_info[@]} noo ${module_info[0]} nee >&2
         load_arguments=( ${load_arguments[@]} ${module_info[0]} )
         requested_modfiles=( ${requested_modfiles[@]} ${module_info[1]} )
     done
@@ -886,11 +886,11 @@ if [[ $# -ge 1 ]] ; then
                 echo '' >&2
             fi
             
-	    fmlglobal=
-	    if [[ $# -ge 1 && "$1" == "--global" ]] ; then
-		shift
-		fmlglobal='--fmlglobal'
-	    fi
+            fmlglobal=
+            if [[ $# -ge 1 && "$1" == "--global" ]] ; then
+                shift
+                fmlglobal='--fmlglobal'
+            fi
             __fml_execute "${fml_source_modfile}" --fmlautobuild "${fmlglobal}" load "${@:1}"
             ;;
         
@@ -908,12 +908,12 @@ if [[ $# -ge 1 ]] ; then
         exit)
             echo '[[ -n $( declare -f module | grep fml ) ]] && module --fmlrestore ; '
             echo '[[ -n $( declare -f fml ) ]] && unset -f fml ; '
-	    # echo 'echo "Unpacking the module environment"'
+            # echo 'echo "Unpacking the module environment"'
             __fml_unpack "${fml_source_modfile}" --nofml
-	    if [[ $? -ne 0 ]] ; then
-		echo 'echo "Warning: unable to restore the full lmod environment"'
-		echo 'return 1'
-	    fi
+            if [[ $? -ne 0 ]] ; then
+                echo 'echo "Warning: unable to restore the full lmod environment"'
+                echo 'return 1'
+            fi
             ;;
         
         init)
@@ -954,7 +954,7 @@ function module () {
     fi
 
     # If requested, fall through to the original Lmod module code, which is embedded after this 'if' clause
-    if [[ "\${1:-}"  != "--lmod" ]] ; then
+    if [[ "\${1:-}"  != "--lmod" &&  ! " \$@ " == *" purge "* ]] ; then
         # Optional debug flag '--fmldebug':
         local fmldebug
         fmldebug=0
@@ -999,7 +999,6 @@ function module () {
             fi
 
         else
-
             # Otherwise, fml.sh wasn't executed and we fall through to the original Lmod module function
 
             __fml_start=\$(date +%s)
@@ -1014,7 +1013,9 @@ function module () {
         # We are done
         return
     else
-        shift
+        if [[ "\${1:-}"  == "--lmod" ]] ; then
+            shift
+	fi
 
         # Below, embed the original Lmod module code but without the function name
         $(declare -f module | awk 'NR > 1')
