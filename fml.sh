@@ -192,7 +192,6 @@ EOF
     ######################
     if [[ " $@ " == *" reset "* ]] ; then
         __fml_reset "${fml_source_modfile}" reset
-        # module reset
         return
     fi
 
@@ -350,7 +349,7 @@ EOF
         __lmod_execute "load fml-${requested_fml_name}"
 
         echo "[[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
-        echo "Fast Module Load: ${requested_fml_name}" >&2
+        echo "Fast Module Load: fml-${requested_fml_name}" >&2
         #     (use 'ml fml' to unpack the full environment)
     else
         if [[ "${update_needed}" -eq '0' ]] ; then
@@ -362,7 +361,7 @@ EOF
 
         
         if [[ -n "${autobuild}" ]] ; then
-            echo 'Fast Module Build : '"fml-${requested_fml_name}" >&2
+            echo 'Fast Module Build: '"fml-${requested_fml_name}" >&2
         fi
     
         echo '__fml_start=$(date +%s)'
@@ -423,12 +422,17 @@ function __fml_reset() {
     else
         func="${@:1}"
     fi
+
+    # echo module --lmod reset
     
     # Perform the reset or purge command:
     __lmod_execute "${func} 2> /dev/null"
 
     # After fml is unloaded, we need to use the original 'module' commands to reload fml:
+    echo 'if [[ ! ":\$MODULEPATH:" == *":'${fml_path}'":* ]] ; then'
     __lmod_execute "use ${fml_path}"
+    echo 'fi'
+    
     if [[ ${quiet} -eq 1 ]] ; then
         __lmod_execute "load ${fml_name}/${fml_version} >& /dev/null"
     else
