@@ -32,7 +32,7 @@ fi
 ##########################
 
 # Load time threshold to print fml reminders:
-export FML_THRESH=1
+export FML_THRESH=5
 
 # Location of the script and its default shortcut library
 fml_base_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -127,6 +127,7 @@ function __fml_execute() {
     local fml_filename
     local requested_fml_name
     local update_needed
+    local first_mod_spec
 
     fml_source_modfile="$1"
     shift
@@ -194,12 +195,11 @@ EOF
         __fml_reset "${fml_source_modfile}" reset
         return
     fi
-
     ######################
     # If no load requested, pass the command through to Lmod
     ######################
     first_load_arg=$(echo "$@" | awk '$1=="load" || $1=="unload" {gsub("/", "_", $2); if($2!="") print $2; exit}')
-    if [[ -z ${first_load_arg} ]] ; then
+    if [[ -z ${first_load_arg} && ${autobuild} -eq 0 ]] ; then
         __lmod_execute "${@:1}"
         return
     fi
@@ -221,27 +221,29 @@ EOF
 
     echo '__fml_start=0'
     echo '__fml_end=0'
-    
-    load_arguments=( $(__fml_get_load_arguments "${@:1}") )
-    if [[ -z "${autobuild}" && -z "${load_arguments[@]}" ]] ; then
-        # If no load requested, pass the command through to Lmod
-        __lmod_execute "${@:1}"
-        return
-    fi
 
-    # Get first requested module minus any version spec
-    first_mod_spec=$(echo ${load_arguments[0]} | awk '{sub("[/].*", "", $0) ; print($1)}')
+    load_arguments=( $(__fml_get_load_arguments "${@:1}") )
     
-    # Skip to the Lmod module function if all these conditions are true::
-    #   (1) The user is just trying to load a module, not build one
-    #   (2) There is no fast module corresponding to the module request
-    #   (3) There are no loaded fast modules
-        if [[ "${autobuild}" -eq 0 \
-              && -z $( module --terse list |& grep '^fml[-]' ) \
-              && -z $( ls ${fml_global_prebuilds_dir}/${first_mod_spec}_* \
-                          ${fml_prebuilds_dir}/${first_mod_spec}_* 2> /dev/null ) ]] ; then
-        __lmod_execute "${@:1}"
-        return
+    # Check if we should just pass through to the Lmod module function (if not building a fast module)
+    if [[ "${autobuild}" -eq 0 ]] ; then
+	if [[ -z "${load_arguments[@]}" ]] ; then
+	    # If no load requested, pass the command through to Lmod
+	    __lmod_execute "${@:1}"
+	    return
+	fi
+
+	# Get first requested module minus any version spec
+	first_mod_spec=$(echo ${load_arguments[0]} | awk '{sub("[/].*", "", $0) ; print($1)}')
+
+	# Skip to the Lmod module function if both the below conditions are true::
+	#   (1) There are no loaded fast modules
+	#   (2) There is no stored fast module corresponding to the module request
+	if [[ -z $( module --terse list |& grep '^fml[-]' ) \
+	      && -z $( ls ${fml_global_prebuilds_dir}/${first_mod_spec}_* \
+			  ${fml_prebuilds_dir}/${first_mod_spec}_* 2> /dev/null ) ]] ; then
+	    __lmod_execute "${@:1}"
+	    return
+	fi
     fi
     
     old_fml_info=( $(__fml_get_loaded_fml) )
@@ -291,9 +293,10 @@ EOF
         fi
     fi
 
+    # If the user types fml with no arguments, this turns on 'autofml'
+    autofml=0
     # If ordinary Lmod modules are loaded, turn on fml_skip to skip fast module loading
     if [[ "${old_fml_name}" == '0' || -n "${ordered_module_list[@]}" ]] ; then
-        
         # Trying to build fast module with modules already present
         #  -> note the hack in the awk script below (END clause) as above to handle
         #     the faulty YCRC R module
@@ -311,23 +314,30 @@ EOF
                                                     END {if(NR != lastln) print arg2}' ) )
             fi
             if [[ "${autobuild}" -eq '1' ]] ; then
-                echo 'Slow-loading this environment because additional modules were already loaded;' >& 2
-                echo 'To create a fast module for this environment, do "module reset" followed by:' >&2
-                echo "    fml ${ordered_module_list[@]} ${load_arguments[@]}" >&2
+		echo <<EOF
+Slow-loading this environment because additional modules were already loaded;
+To create a fast module for this environment, do "module reset" followed by:
+     fml ${ordered_module_list[@]} ${load_arguments[@]}
+EOF
             fi
         else
-            echo 'FML!' >&2
-            return
+            echo echo 'FML!' ${__fml_load_requests}
+	    autofml=1
         fi
     fi
-    
-    fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
-    if [[ "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 || "$?" -ne '0' ]] ; then
-        # Revert to lmod functions
-        __lmod_execute "${@:1}"
-        return
-    fi
 
+    if [[ ${autofml} -eq 0 ]] ; then
+	fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
+    else
+	fml_info=( $(__fml_get_load_info ${__fml_load_requests} ) )
+    fi
+    
+    if [[ "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 || "$?" -ne '0' ]] ; then
+	# Revert to lmod functions
+	__lmod_execute "${@:1}"
+	return
+    fi
+        
     fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )
     if [[ ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
@@ -339,6 +349,10 @@ EOF
         update_needed=''
     fi
 
+    if [[ "${autofml}" -eq 1 && "${update_needed}" -eq '0' ]] ; then
+        __fml_reset "${fml_source_modfile}" reset
+    fi
+    
     ######################
     # Perform specialized load/unloading actions
     ######################
@@ -349,7 +363,7 @@ EOF
         __lmod_execute "load fml-${requested_fml_name}"
 
         echo "[[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
-        echo "Fast Module Load: fml-${requested_fml_name}" >&2
+        echo echo "Fast Module Load: fml-${requested_fml_name}"
         #     (use 'ml fml' to unpack the full environment)
     else
         if [[ "${update_needed}" -eq '0' ]] ; then
@@ -359,9 +373,8 @@ EOF
         # Request a module load, also recording the output, load time and exit status
         echo "mkdir -p $(dirname ${fml_filename} ) ; "
 
-        
         if [[ -n "${autobuild}" ]] ; then
-            echo 'Fast Module Build: '"fml-${requested_fml_name}" >&2
+            echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
         fi
     
         echo '__fml_start=$(date +%s)'
@@ -428,8 +441,10 @@ function __fml_reset() {
     # Perform the reset or purge command:
     __lmod_execute "${func} 2> /dev/null"
 
+    echo 'unset __fml_load_requests'
+    
     # After fml is unloaded, we need to use the original 'module' commands to reload fml:
-    echo 'if [[ ! ":\$MODULEPATH:" == *":'${fml_path}'":* ]] ; then'
+    echo 'if [[ ":\$MODULEPATH:" != *":'${fml_path}'":* ]] ; then'
     __lmod_execute "use ${fml_path}"
     echo 'fi'
     
@@ -771,7 +786,7 @@ function __fml_get_load_info() {
     local module_info
     local status
     local new_fml_part
-    
+
     load_arguments=
     requested_modfiles=()
     for arg in "${@:1}" ; do
@@ -806,7 +821,6 @@ function __fml_get_load_info() {
                              nextarg=1;
                            }
                          }')
-    
     echo ${new_fml_part} ${requested_modfiles[@]}
 }
 
@@ -926,18 +940,11 @@ if [[ $# -ge 1 ]] ; then
             ;;
         
         init)
-            echo 'export __fml_placeholder=______'
             shift
             if [[ -z $( declare -f module | grep fml ) ]] ; then
 cat <<EOF
 
-# Enable autocompletion for fml the same as 'ml':
-
-t=( \$(complete -p ml) )
-if [ "\$(type -t \${t[2]})" = 'function' ]; then
-    complete -F "\${t[2]}" fml
-fi
-
+# Fast module generating function
 function fml () {
     if [[ \$# -ge 1 && "\$1" == "--fmldebug" ]] ; then
         shift
@@ -947,9 +954,26 @@ function fml () {
     fi
 }
 
-# Hijack the Lmode module function:
+# Initialize user shell variable to keep track of requested module loads
+if [[ -z "${__fml_load_requests:-}" ]] ; then
+    # Sync check: our list of load requests can't be safely reset if the user has already loaded
+    #  modules other than the system standard ones (and fml)
+    if [[ -z \$(module --terse list |& grep -v '^StdEnv$' |& grep -v '^fml[/]') ]] ; then
+	export __fml_load_requests='___'
+    else
+	export __fml_load_requests='______'
+    fi
+fi
+
+# Hijacked Lmod module function
 function module () {
-    :
+    # If requested, restore the original Lmod module function
+    if [[ "\${1:-}"  == "--fmlrestore" ]] ; then
+        # Embed the original module code right here, so it will be restored
+        $(declare -f module)
+        return
+    fi
+
     local __fml_status
     local __fml_start
     local __fml_end
@@ -958,15 +982,9 @@ function module () {
     __fml_start=0
     __fml_end=0
 
-    # If requested, restore the original Lmod module function
-    if [[ "\${1:-}"  == "--fmlrestore" ]] ; then
-        # Embed the original module code right here, so it will be restored
-        $(declare -f module)
-        return
-    fi
-
-    # If requested, fall through to the original Lmod module code, which is embedded after this 'if' clause
-    if [[ "\${1:-}"  != "--lmod" &&  ! " \$@ " == *" purge "* ]] ; then
+    # If --lmod or purge are requested, fall through to the original Lmod module code,
+    #   which is embedded after this 'if' clause
+    if [[ "\${1:-}"  != "--lmod" && " \$@ " != *" purge "* ]] ; then
         # Optional debug flag '--fmldebug':
         local fmldebug
         fmldebug=0
@@ -1005,38 +1023,56 @@ function module () {
            ]] ; then
 
             if [[ \${fmldebug} -eq 1 ]] ; then
-                echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \${@:1})" >&2
+                echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )" >&2
             else
-                eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \${@:1})"
+                eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )"
             fi
-
         else
             # Otherwise, fml.sh wasn't executed and we fall through to the original Lmod module function
 
             __fml_start=\$(date +%s)
-            module --lmod \${@:1}
+            module --lmod \$@
             __fml_end=\$(date +%s)
 
         fi
 
+	# Check for excessively slow module loads
 	runtime=\$( echo \${__fml_start:-} \${__fml_end:-} | awk '{print \$2 - \$1}' )
-
 	if [[ "\${runtime}" -ge $FML_THRESH ]] ; then
 	    echo 'Slow load time detected ( '\${runtime}' sec ) ; Consider using fml to speed up loading of this module :' >&2
 	    echo '    fml '\${@:2}
 	fi
-
-        # We are done
-        return
     else
+	# Execute the original Lmod module function
+
+	# Remove the fml-specific --lmod flag, if it was used to trigger the current call
         if [[ "\${1:-}"  == "--lmod" ]] ; then
             shift
 	fi
 
-        # Below, embed the original Lmod module code but without the function name
+        # Embed the original Lmod module code but without the function name
         $(declare -f module | awk 'NR > 1')
     fi
+
+    # Keep track of requested module loads
+    if [[ "\${__fml_load_requests:-}" != '______' ]] ; then
+	# Get list of newly user-requested modules
+        local extra_modules
+	extra_modules=\$(echo \$@ | awk '{for(i=1;i<=NF;++i) if(\$i !~ /^-/){if(\$i=="load"){for(j=i+1;j<=NF;++j) printf "%s%s", \$j, (j==NF?ORS:OFS)} break}}')
+
+        if [[ -n "\${extra_modules[@]}" ]] ; then
+	    [[ "\${__fml_load_requests}" == '___' ]] && export __fml_load_requests=
+	    export __fml_load_requests="\${__fml_load_requests[@]} \${extra_modules[@]}"
+            # echo blarch "\${#__fml_load_requests}" "\${__fml_load_requests}"
+	fi
+    fi
 }
+
+# Enable autocompletion for fml the same as 'ml':
+t=( \$(complete -p ml) )
+if [ "\$(type -t \${t[2]})" = 'function' ]; then
+    complete -F "\${t[2]}" fml
+fi
 
 echo 'Fast Module Loading is active.'
 echo "Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'"

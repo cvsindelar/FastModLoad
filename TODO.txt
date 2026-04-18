@@ -3,6 +3,7 @@
 # Priority #1
 # 1. Permissions check for --global option
 # 2. Github README
+# 3. failed build sequence: ml reset ; ml Automake ; ml miniconda ; ml R ; fml
 
 # Priority #2
 # 3. Prioritize user's .config fast modules over global ones if both exist
