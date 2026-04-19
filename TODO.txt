@@ -2,9 +2,25 @@
 
 # Priority #1
 # 2. Github README
-# 3. failed build sequence: ml reset ; ml Automake ; ml miniconda ; ml R ; fml
-# 4. separate __fml function from __fml_execute and unweave tangled web of if statements
-#    starting at line 264
+# 3. Failure sequence:
+
+$ /bin/rm -r ~/.config/fml/fml_prebuilds/fml_1.0beta/
+$ /bin/rm -r ~/.config/fml/fml_prebuilds/Boost.Python-NumPy_1.85.0-gfbf-2024a/
+$ ml Boost.Python-NumPy 
+Slow load time detected ( '5' sec ) ; 
+  - type 'fml' <enter> to speed up loading of this module
+$ fml
+Fast Module Build: fml-fml_1.0beta___Boost.Python-NumPy_1.85.0-gfbf-2024a
+$ ml fml
+Unpacking the module environment for fml-fml_1.0beta___Boost.Python-NumPy_1.85.0-gfbf-2024a
+Fast Module Loading is active.
+Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'
+$ echo ${__fml_load_requests}
+fml
+$ fml
+Fast Module Build: fml-fml_1.0beta
+
+
 
 # Priority #2
 # 3. Prioritize user's .config fast modules over global ones if both exist
