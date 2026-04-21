@@ -13,7 +13,7 @@ whatis([==[Description: Fast Module Loader for Lmod-Based HPC Software Stacks]==
 whatis([==[Homepage: https://github.com/cvsindelar/FastModLoad]==])
 whatis([==[URL: https://github.com/cvsindelar/FastModLoad]==])
 
-add_property("lmod","sticky")
+-- add_property("lmod","sticky")
 
 local root = "/vast/palmer/home.mccleary/cvs2/programs/FastModLoad"
 local script = pathJoin(root, "fml.sh")
