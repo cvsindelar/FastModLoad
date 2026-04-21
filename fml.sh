@@ -1202,7 +1202,7 @@ function module () {
     if [[ "\${__fml_load_requests:-}" != '______' ]] ; then
         # Get list of newly user-requested modules
         local extra_modules
-        extra_modules=\$(echo \$@ | awk '{for(i=1;i<=NF;++i) if(\$i !~ /^-/){if(\$i=="load"){for(j=i+1;j<=NF;++j) printf "%s%s", \$j, (j==NF?ORS:OFS)} break}}')
+        extra_modules=\$(echo \$@ | awk '{for(i=1;i<=NF;++i) if(\$i !~ /^-/){if(\$i=="load"){for(j=i+1;j<=NF;++j) if(\$j !~ "^fml(|[/])") printf "%s%s", \$j, (j==NF?ORS:OFS)} break}}' )
 
         if [[ -n "\${extra_modules[@]}" ]] ; then
             [[ "\${__fml_load_requests}" == '___' ]] && export __fml_load_requests=
