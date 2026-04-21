@@ -1,8 +1,8 @@
 # Remaining features to implement:
 
 # Priority #1
-# 2. Github README
-# 3. Failure sequence:
+# 1. Github README
+# 2. Failure sequence:
 
 $ /bin/rm -r ~/.config/fml/fml_prebuilds/fml_1.0beta/
 $ /bin/rm -r ~/.config/fml/fml_prebuilds/Boost.Python-NumPy_1.85.0-gfbf-2024a/
@@ -20,12 +20,23 @@ fml
 $ fml
 Fast Module Build: fml-fml_1.0beta
 
-
-
 # Priority #2
 # 3. Prioritize user's .config fast modules over global ones if both exist
-# 4. 'fml' with no args converts the currently loaded module into a fast module
-# 5. Warn when including conda/miniconda in a fast module
+# 4. Warn when including conda/miniconda in a fast module
+# fml options:
+#   --on : write to .config/fml/fml.config : active on
+#   --off : write to .config/fml/fml.config : active off
+#   --auto : write to .config/fml/fml.config : active auto
+#   --fail : write to .config/fml/fml.config : active fail
+#   --disable/deactivate : fast module dir renamed to xxx.d ;
+#                          additional __fml logic : new fml requests check for existence & validate
+#  --thresh : set to <val>
+#  --update/force : overwrite existing fast module even if up to date
+#  --clear : permanently delete fast module file (recognize --global)
+#  --nuke : recognize --global
+# Rename functions in fml.sh to more be more logical
+# Add to bailout function: auto execute original lmod module func after restoring it
+#   -> this necessitates not using "shift" in hijacked module func
 
 $ Priority #3
 
