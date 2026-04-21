@@ -330,7 +330,7 @@ EOF
         __lmod_module_execute "load fml-${requested_fml_name}"
 
         echo "[[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
-        echo echo "Fast Module Load: fml-${requested_fml_name}"
+        echo "Fast Module Load: fml-${requested_fml_name}" >&2
         #     (use 'ml fml' to unpack the full environment)
     else
         if [[ "${update_needed}" -eq '0' ]] ; then
