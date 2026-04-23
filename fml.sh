@@ -319,7 +319,7 @@ EOF
         requested_fml_name=''
         update_needed=''
     fi
-    
+
     ######################
     # Perform specialized load/unloading actions
     ######################
@@ -346,6 +346,15 @@ EOF
         
         echo '__fml_status=$? '
         echo "cat ${fml_filename%.lua}.out ; "
+
+        if [[ "${update_needed}" -eq '1' ]] ; then
+            echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
+	    echo '__fml_start=0'
+	    echo '__fml_end=0'
+            cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} build ${requested_fml_name} ${fml_filename})"
+EOF
+	fi
     fi
 }
 
