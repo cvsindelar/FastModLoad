@@ -11,7 +11,7 @@ toolchain = SYSTEM
 source_urls = ['https://github.com/cvsindelar/FastModLoad/archive/refs/tags/']
 sources = ['v%(version)s.tar.gz']
 
-start_dir = 'fml-%(version)s'
+start_dir = 'FastModLoad-%(version)s'
 
 sanity_check_paths = {
     'files': ['fml.sh'],
@@ -22,8 +22,10 @@ modluafooter = '''
 local script = pathJoin(root, "fml.sh")
 
 if myShellType() == "sh" then
-  execute {cmd="eval \"$( bash " .. script .. " " .. myFileName() .. " init " .. " )\" ; ", modeA={"load"}}
-  execute {cmd="eval $( bash " .. script .. " " .. myFileName() .. " exit " .. " ) ; ", modeA={"unload"}}
+--  execute {cmd="eval \"$( bash " .. script .. " " .. myFileName() .. " init " .. " )\" ; ", modeA={"load"}}
+--  execute {cmd="eval $( bash " .. script .. " " .. myFileName() .. " exit " .. " ) ; ", modeA={"unload"}}
+    execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ init)" ]], modeA={"load"}}
+    execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ exit)" ]], modeA={"unload"}}
 else
   execute {cmd="echo 'FML: sorry, this is not implemented for shell type ".. myShellType() .. "' >&2", modeA={"load"}}
 end
