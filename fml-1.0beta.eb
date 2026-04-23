@@ -8,7 +8,7 @@ description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
 
 toolchain = SYSTEM
 
-source_urls = ['https://github.com/cvsindelar/fml/archive/refs/tags/']
+source_urls = ['https://github.com/cvsindelar/FastModLoad/archive/refs/tags/']
 sources = ['v%(version)s.tar.gz']
 
 start_dir = 'fml-%(version)s'
