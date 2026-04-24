@@ -440,9 +440,7 @@ function __fml() {
         else
             # User requested another module load on top of existing loaded modules
             #  (not allowed for now)
-            cat <<EOF
-Modules are already loaded. Please use 'fml' by itself or do 'module reset' first.
-EOF
+	    echo echo "Modules are already loaded. Please use 'fml' by itself or do 'module reset' first."
             return
         fi
     else
