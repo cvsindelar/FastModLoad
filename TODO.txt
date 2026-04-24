@@ -2,27 +2,11 @@
 
 # Priority #1
 # 1. Github README
-# 2. Failure sequence:
-
-$ /bin/rm -r ~/.config/fml/fml_prebuilds/fml_1.0beta/
-$ /bin/rm -r ~/.config/fml/fml_prebuilds/Boost.Python-NumPy_1.85.0-gfbf-2024a/
-$ ml Boost.Python-NumPy 
-Slow load time detected ( '5' sec ) ; 
-  - type 'fml' <enter> to speed up loading of this module
-$ fml
-Fast Module Build: fml-fml_1.0beta___Boost.Python-NumPy_1.85.0-gfbf-2024a
-$ ml fml
-Unpacking the module environment for fml-fml_1.0beta___Boost.Python-NumPy_1.85.0-gfbf-2024a
-Fast Module Loading is active.
-Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'
-$ echo ${__fml_load_requests}
-fml
-$ fml
-Fast Module Build: fml-fml_1.0beta
 
 # Priority #2
+# 2. Enhance 'fml' functionality with no arguments: alternately disable and reenable fast modules
 # 3. Prioritize user's .config fast modules over global ones if both exist
-# 4. Warn when including conda/miniconda in a fast module
+# 4. Warn when including conda/miniconda or EasyBuild in a fast module
 # fml options:
 #   --on : write to .config/fml/fml.config : active on
 #   --off : write to .config/fml/fml.config : active off

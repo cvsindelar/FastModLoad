@@ -429,15 +429,10 @@ function __fml() {
     # Check to be sure we are starting from a fresh environment (no other loaded modules or fast modules);
     #  otherwise there can be pathologies.
 
-    # Check if fast module is loaded
-    if [[ -n "${old_fml_name}" && "${old_fml_name}" != '0' ]] ; then
-        echo "A fast module is currently loaded: ${old_fml_name}" >&2
-        return
-    fi
-    # If the user types fml with no arguments, this triggers 'autofml'
+    # If the user types fml with no arguments, this can trigger 'autofml'
     local autofml
     autofml=0
-    # If no modules are loaded, build a fast module from the current environment
+    # If a Fast Module is not loaded, build a fast module from the current environment
     if [[ "${old_fml_name}" == '0' ]] ; then
         if [[ "${#load_arguments[@]}" -eq 0 ]] ; then
             autofml=1
@@ -450,7 +445,12 @@ EOF
             return
         fi
     else
-        echo 'fml --help'
+        if [[ -n "${old_fml_name}" ]] ; then
+            echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
+            __fml_unpack "${old_fml_modfile}"
+	else
+            echo 'fml --help'
+	fi
         return
     fi
 
@@ -492,9 +492,8 @@ EOF
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
 
         if [[ ${autofml} -eq 1 ]] ; then
-            echo echo "Fast module already exists and is up to date: fml-${requested_fml_name}"
-            return
-            # __fml_reset "${fml_source_modfile}" reset
+            # echo echo "Fast module already exists and is up to date: fml-${requested_fml_name}"
+            __fml_reset "${fml_source_modfile}" reset
         fi
         
         __lmod_module_execute "use $(dirname ${fml_filename})"
@@ -1056,11 +1055,18 @@ if [[ $# -ge 1 ]] ; then
             shift
             if [[ $# -ge 1  && "$1" == "--help" ]] ; then
                 shift
-                echo 'Usage: fml [--help] [--global] <module 1> [<module 1> ...]' >&2
+                echo 'Usage:' >&2
+		echo '    fml [--global]         Make a Fast Module for the current module environment and load it' >&2
+                echo '                           Alternatively, unpack the currently loaded Fast Module to restore' >&2
+                echo '                           the original Lmod environment' >&2
                 echo '' >&2
+                echo '    fml [--global] <module 1> [<module 2> ...]' >&2
+                echo '                           Make a Fast Module for the listed modules' >&2
                 echo 'Options:' >&2
-                echo '--help           This help message' >&2
-                echo "--global         Make the new fast module available to all users" >&2
+                echo '--help                     This help message' >&2
+                echo "--global                   Make the new fast module available to all users" >&2
+                echo '                            (requires write permission to the fml app folder:' >&2
+                echo "                             ${fml_base_dir} )" >&2
                 echo '' >&2
                 exit
             fi
