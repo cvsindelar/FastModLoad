@@ -717,6 +717,7 @@ function __fml_build() {
     
     mkdir -p $(dirname "${mod_filename}")
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
+    mkdir -p ~/.config/lmod
     tmpfile1=$( mktemp ~/.config/lmod/fmltmpXXXXXXXXXX)
     tmpfile2=$( mktemp -p $(dirname "${mod_filename}") )
     tmpfile3=$( mktemp -p $(dirname "${mod_filename}") )
@@ -1068,9 +1069,9 @@ if [[ $# -ge 1 ]] ; then
             if [[ $# -ge 1 && "$1" == "--global" ]] ; then
                 shift
                 fmlglobal='--global'
-                if [[ ! -w ${fml_global_prebuilds_dir} ]] ; then
+                if [[ ! -w ${fml_base_dir} ]] ; then
                     echo 'Sorry, you do not have write permission in the global FastModLoad folder:' >&2
-                    echo "      ${fml_global_prebuilds_dir}" >&2
+                    echo "      ${fml_base_dir}" >&2
                     exit
                 fi
             fi
