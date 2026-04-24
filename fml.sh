@@ -32,7 +32,7 @@ fi
 ##########################
 
 # Load time threshold to print fml reminders:
-export FML_THRESH=2
+export FML_THRESH=5
 
 # Location of the script and its default shortcut library
 fml_base_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -429,12 +429,13 @@ function __fml() {
     # Check to be sure we are starting from a fresh environment (no other loaded modules or fast modules);
     #  otherwise there can be pathologies.
 
-    # If the user types fml with no arguments, this can trigger 'autofml'
     local autofml
     autofml=0
-    # If a Fast Module is not loaded, build a fast module from the current environment
     if [[ "${old_fml_name}" == '0' ]] ; then
+        # Above is true if a Fast Module is not loaded AND ordiary modules are present/loaded
         if [[ "${#load_arguments[@]}" -eq 0 ]] ; then
+            # If the user types fml with no arguments, trigger 'autofml'
+            #  to build a Fast Module from the current environment
             autofml=1
         else
             # User requested another module load on top of existing loaded modules
@@ -445,13 +446,23 @@ EOF
             return
         fi
     else
-        if [[ -n "${old_fml_name}" ]] ; then
-            echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
-            __fml_unpack "${old_fml_modfile}"
-	else
+        if [[ "${#load_arguments[@]}" -eq 0 && -z "${old_fml_name}" ]] ; then
+            # No arguments to fml, and no Fast Module or other modules are loaded:
             echo 'fml --help'
+            return
 	fi
-        return
+        if [[ -n "${old_fml_name}" ]] ; then
+            if [[ "${#load_arguments[@]}" -eq 0 ]] ; then
+                # If a Fast Module is loaded, unpack it
+                echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
+                __fml_unpack "${old_fml_modfile}"
+                return
+            else
+                echo echo "Modules are already loaded. Please use 'fml' by itself or do 'module reset' first."
+                echo 'fml --help'
+                return
+            fi
+        fi
     fi
 
     if [[ ${autofml} -eq 0 ]] ; then
