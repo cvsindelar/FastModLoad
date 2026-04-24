@@ -169,9 +169,9 @@ echo "FastModLoad Emulated Environment:"
 echo "    fml-${fml_name}"
 echo "#####################################################"
 echo ''
-echo "Use 'ml fml' to unpack the original Lmod environment"
-echo "Use 'module purge' or 'ml -fml' to turn off Fast Module Loading"
-echo "Use 'module --lmod list' to peek at the current (true) Lmod environment"
+echo "Type 'fml' to unpack the original Lmod environment"
+echo "Type 'module purge' or 'ml -fml' to turn off Fast Module Loading"
+echo "Type 'module --lmod list' to peek at the current (true) Lmod environment"
 echo ''
 EOF
             else
