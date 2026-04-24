@@ -1121,6 +1121,10 @@ cat <<EOF
 
 # Fast module generating function
 function fml () {
+    local __fml_status
+    local __fml_start
+    local __fml_end
+
     if [[ \$# -ge 1 && "\$1" == "--fmldebug" ]] ; then
         shift
         echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} fml \${@:1})"
