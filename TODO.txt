@@ -2,17 +2,6 @@
 
 # Priority #1
 # 1. Github README
-# Bug remains:
-no fml loaded:
-[cvs2@login2.mccleary ~]$ ml R/4.3.2
-[cvs2@login2.mccleary ~]$ fml
--bash: fml: command not found
-[cvs2@login2.mccleary ~]$ ml fml
-Fast Module Loading is active.
-Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'
-[cvs2@login2.mccleary ~]$ fml
-Fast Module Build: fml-fml_1.0beta
-
 
 # Priority #2
 # 2. Enhance 'fml' functionality with no arguments: alternately disable and reenable fast modules
