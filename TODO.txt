@@ -2,6 +2,8 @@
 
 # Priority #1
 # 1. Github README
+# 2. Bugfix: module load RELION RELION-python (bouchet or mccleary) followed by fml
+#     gives the fast module name: fml-RELION_5.0.0-foss-2022b-CUDA-12.1.1
 
 # Priority #2
 # 2. Enhance 'fml' functionality with no arguments: alternately disable and reenable fast modules
