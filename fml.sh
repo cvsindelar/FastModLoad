@@ -432,7 +432,7 @@ function __fml() {
     local autofml
     autofml=0
     if [[ "${old_fml_name}" == '0' ]] ; then
-        # Above is true if a Fast Module is not loaded AND ordiary modules are present/loaded
+        # Above is true if a Fast Module is not loaded AND ordinary modules are present/loaded
         if [[ "${#load_arguments[@]}" -eq 0 ]] ; then
             # If the user types fml with no arguments, trigger 'autofml'
             #  to build a Fast Module from the current environment
