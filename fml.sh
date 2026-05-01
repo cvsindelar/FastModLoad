@@ -298,6 +298,7 @@ EOF
                                      |& lua - | sort -n -k 1 \
                                          | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
                                                   print $2;
+                                                  lastln=NR;
                                                 }}
                                                 {arg2=$2}
                                                 END {if(NR != lastln) print arg2}' ) )
@@ -471,6 +472,7 @@ function __fml() {
 				 |& lua - | sort -n -k 1 \
 				     | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
 					      print $2;
+                                              lastln=NR;
 					    }}
 					    {arg2=$2}
 					    END {if(NR != lastln) print arg2}' ) )
