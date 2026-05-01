@@ -2,6 +2,7 @@
 
 # Priority #1
 # 1. Github README
+# 2. double check permissions fix in the easyconfig 'fml-1.0beta.eb': "chmod g+s %(installdir)s/fml_prebuilds"
 
 # Priority #2
 # 3. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt

@@ -316,12 +316,14 @@ EOF
         echo "Fast Module Load: fml-${requested_fml_name}" >&2
         #     (use 'ml fml' to unpack the full environment)
     else
+        # Request a module load, also recording the output, load time and exit status
         if [[ "${update_needed}" -eq '0' ]] ; then
             :
             # echo 'Fast module check:'" ${load_arguments[@]}" >&2
         fi
-        # Request a module load, also recording the output, load time and exit status
-        echo "mkdir -p $(dirname ${fml_filename} ) ; "
+
+	# Ensure the directory exists? Should not be necessary for a fast module load or rebuild
+        # echo "mkdir -p $(dirname ${fml_filename} ) ; "
 
         if [[ "${update_needed}" -eq '1' ]] ; then
             echo echo 'Fast Module Update: '"fml-${requested_fml_name}"
@@ -334,6 +336,7 @@ EOF
         echo '__fml_status=$? '
         echo "cat ${fml_filename%.lua}.out ; "
 
+	# Rebuild the module, if needed
         if [[ "${update_needed}" -eq '1' ]] ; then
 	    echo '__fml_start=0'
 	    echo '__fml_end=0'
@@ -501,7 +504,10 @@ function __fml() {
         #     (use 'ml fml' to unpack the full environment)
     else
         # Request a module load, also recording the output, load time and exit status
-        echo "mkdir -p $(dirname ${fml_filename} ) ; "
+
+	# Make the fast module directory, if it doesn't already exist, to capture the output
+	#  of the below 'module load' command:
+        mkdir -p $(dirname ${fml_filename} )
 
         echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
     
@@ -512,6 +518,7 @@ function __fml() {
         echo '__fml_status=$? '
         echo "cat ${fml_filename%.lua}.out ; "
 
+	# Build the module
         cat <<EOF
 eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} build ${requested_fml_name} ${fml_filename})"
 EOF
@@ -711,7 +718,9 @@ function __fml_build() {
     #  independence of the local variables
     ##################
     
+    echo echo mkdir -p $(dirname "${mod_filename}")
     mkdir -p $(dirname "${mod_filename}")
+    
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
     mkdir -p ~/.config/lmod
     tmpfile1=$( mktemp ~/.config/lmod/fmltmpXXXXXXXXXX)
@@ -1209,6 +1218,11 @@ function module () {
             module --lmod \$@
             __fml_end=\$(date +%s)
 
+	    # Zero the runtime unless a module load was requested:
+            if [[ \$(echo "\$@" | awk '\$1=="load" {print 1 ; exit} END {print 0}') -eq 0 ]] ; then
+	        __fml_start=0
+		__fml_end=0
+	    fi
         fi
 
         # Check for excessively slow module loads

@@ -13,6 +13,12 @@ sources = ['v%(version)s.tar.gz']
 
 start_dir = 'FastModLoad-%(version)s'
 
+postinstallcmds = [
+    # Make sure the new file/folder group permissions are inherited
+    #  so that fellow group members may also create global fast modules:
+    "chmod g+s %(installdir)s/fml_prebuilds",
+]
+
 sanity_check_paths = {
     'files': ['fml.sh'],
     'dirs': ['.'],
