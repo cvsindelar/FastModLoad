@@ -412,7 +412,7 @@ function __fml() {
     ######################
     # Set up fml load variables & check for errors
     ######################
-
+        
     load_arguments=( $(__fml_get_load_arguments "${@:1}") )
     
     old_fml_info=( $(__fml_get_loaded_fml) )
@@ -476,7 +476,7 @@ function __fml() {
 					    }}
 					    {arg2=$2}
 					    END {if(NR != lastln) print arg2}' ) )
-        fml_info=( $(__fml_get_load_info --slow ${ordered_module_list} ) )
+        fml_info=( $(__fml_get_load_info --slow ${ordered_module_list[@]} ) )
 
         if [[ "${#fml_info[@]}" -eq 0 || "$?" -ne '0' ]] ; then
             echo 'fml --help'

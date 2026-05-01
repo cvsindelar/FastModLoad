@@ -2,15 +2,12 @@
 
 # Priority #1
 # 1. Github README
-# 2. Bugfix: module load RELION RELION-python (bouchet or mccleary) followed by fml
-#     gives the fast module name: fml-RELION_5.0.0-foss-2022b-CUDA-12.1.1
 
 # Priority #2
 # 3. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
 # 4. --name option for 'fml'
 # 5. Enhance 'fml' functionality with no arguments: alternately disable and reenable fast modules
-# 6. Prioritize user's .config fast modules over global ones if both exist
-# 7. Warn when including conda/miniconda or EasyBuild in a fast module
+# 6. Warn when including conda/miniconda or EasyBuild in a fast module
 # fml options:
 #   --on : write to .config/fml/fml.config : active on
 #   --off : write to .config/fml/fml.config : active off
@@ -28,18 +25,18 @@
 
 $ Priority #3
 
-# 6. Implement tcsh/csh functionality ; 
+# 7. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
 #     alias module "$my_backup"
-#    The trick for #9, safety feature redefining 'module' within 'module' could possibly be
+#    A trick for a safety feature redefining 'module' within 'module' could possibly be
 #     based on the following:
 #     The bash equivalent for eval "${__fml_orig_module_code}" 
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# 7. Auto-deleting local fast module builds when they are identical to the global builds
+# 8. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
