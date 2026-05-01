@@ -249,7 +249,8 @@ EOF
                 echo 'return 1'
             fi
 	else
-	    # fall back to the original Lmod module code,
+	    # fall back to the original Lmod module code
+	    echo 'Falling back' >&2
             __lmod_module_execute "${@:1}"
 	    return
         fi
@@ -275,10 +276,11 @@ EOF
                                                 END {if(NR != lastln) print arg2}' ) )
         fi
     fi
+
+    status=0
+    fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
     
-    fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
-    
-    if [[ "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 || "$?" -ne '0' ]] ; then
+    if [[ "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 || "$status" -ne '0' ]] ; then
         # Revert to lmod functions
         __lmod_module_execute "${@:1}"
         return
@@ -435,8 +437,9 @@ function __fml() {
         fi
     fi
 
+    status=0
     if [[ ${autofml} -eq 0 ]] ; then
-        fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) )
+        fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
     else
         ordered_module_list=( $( ( module --mt ; \
 				   echo "${module_names_from_mt_lua_script}" ) \
@@ -447,14 +450,15 @@ function __fml() {
 					    }}
 					    {arg2=$2}
 					    END {if(NR != lastln) print arg2}' ) )
-        fml_info=( $(__fml_get_load_info --slow ${ordered_module_list[@]} ) )
+        fml_info=( $(__fml_get_load_info --slow ${ordered_module_list[@]} ) )  || status=$?
 
-        if [[ "${#fml_info[@]}" -eq 0 || "$?" -ne '0' ]] ; then
-            echo 'fml --help'
-            return
-        fi
     fi
-    
+
+    if [[ "${#fml_info[@]}" -eq 0 || "$status" -ne '0' ]] ; then
+        echo 'fml --help'
+        return
+    fi
+	
     fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )
     if [[ ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
@@ -901,6 +905,11 @@ function __fml_get_load_info() {
     if [[ "${1:-}" == "--slow" ]] ; then
         shift
         slow=1
+    fi
+
+    if [[ "$#" -gt 3 ]] ; then
+	echo 'Fast modules not allowed for 4 or more modules' >&2
+	return 1
     fi
     
     load_arguments=
