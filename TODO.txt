@@ -2,7 +2,22 @@
 
 # Priority #1
 # 1. Github README
-# 2. double check permissions fix in the easyconfig 'fml-1.0beta.eb': "chmod g+s %(installdir)s/fml_prebuilds"
+# 2. Finish check permissions fix in the easyconfig 'fml-1.0beta.eb': "chmod g+s %(installdir)s/fml_prebuilds"
+#    Inheritance is still not working properly:
+
+[cvs2@login1.bouchet FastModLoad]$ fml --global Python
+(Re)building the global fast module:  Python_3.12.3-GCCcore-13.3.0
+Fast Module Build: fml-Python_3.12.3-GCCcore-13.3.0
+mkdir -p /apps/software/system/software/fml/1.0beta/fml_prebuilds/Python_3.12.3-GCCcore-13.3.0
+[cvs2@login1.bouchet FastModLoad]$ ls -l /apps/software/system/software/fml/1.0beta/fml_prebuilds/Python_3.12.3-GCCcore-13.3.0/
+total 45
+-rw-rw-r-- 1 cvs2 support   691 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.fancy_list
+-rw-rw-r-- 1 cvs2 support   320 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.list
+-rw------- 1 cvs2 support 19166 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.lua
+-rw------- 1 cvs2 support 18513 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.lua_record
+-rw------- 1 cvs2 cvs2     5533 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.mt
+-rw-rw-r-- 1 cvs2 support     0 May  1 18:11 fml-Python_3.12.3-GCCcore-13.3.0.out
+
 
 # Priority #2
 # 3. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
