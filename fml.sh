@@ -229,18 +229,20 @@ EOF
         fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
         if [[ "${#fml_info[@]}" -gt 0 && "$status" -eq '0' ]] ; then
             # For message printing, get the original list of user-requested modules
-            #  -> note the last 2 lines in the awk script below (END clause) are a hack to handle the faulty
-            #     YCRC R module where R itself gets unloaded, so we print the top of the load stack
-            #     (R-bundle-Bioconductor) just to print something
+            #  -> note the last 2 lines in the awk script below (END clause) handle the edge
+            #     case where for some reason the last listed module is not a user-requested one
+            #     (we print it anyway)
             ordered_module_list=( $( (cat ${old_fml_modfile%.lua}.mt ; \
                                   echo "${module_names_from_mt_lua_script}" ) \
                                  |& lua - | sort -n -k 1 \
-                                 | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-                                           print $2;
-                                           lastln=NR;
-                                         }}
-                                         {arg2=$2}
-                                         END {if(NR != lastln) print arg2}' ) )
+                                     | awk '{if($3 + 0 == 0) {
+                                               lastln=NR ; 
+                                               if($2 != "StdEnv" && $2 !~ "^fml[/]" ) 
+                                                  print $2 ;
+                                               }} 
+                                            {arg2=$2} 
+                                            END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
+                                              print arg2}' ) )
 
             echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
             __fml_unpack "${old_fml_modfile}"
@@ -264,16 +266,21 @@ EOF
         #  -> note the hack in the awk script below (END clause) as above to handle
         #     the faulty YCRC R module
         if [[ "${old_fml_name}" == '0'  ]] ; then
-            # For message printing, get the list of user-loaded Lmod modules
+            # For message printing, get the original list of user-requested modules
+            #  -> note the last 2 lines in the awk script below (END clause) handle the edge
+            #     case where for some reason the last listed module is not a user-requested one
+            #     (we print it anyway)
             ordered_module_list=( $( ( module --mt ; \
                                        echo "${module_names_from_mt_lua_script}" ) \
                                      |& lua - | sort -n -k 1 \
-                                         | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-                                                  print $2;
-                                                  lastln=NR;
-                                                }}
-                                                {arg2=$2}
-                                                END {if(NR != lastln) print arg2}' ) )
+                                     | awk '{if($3 + 0 == 0) {
+                                               lastln=NR ; 
+                                               if($2 != "StdEnv" && $2 !~ "^fml[/]" ) 
+                                                  print $2 ;
+                                               }} 
+                                            {arg2=$2} 
+                                            END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
+                                              print arg2}' ) )
         fi
     fi
 
@@ -441,17 +448,22 @@ function __fml() {
     if [[ ${autofml} -eq 0 ]] ; then
         fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
     else
+            # Get the original list of user-requested modules
+            #  -> note the last 2 lines in the awk script below (END clause) handle the edge
+            #     case where for some reason the last listed module is not a user-requested one
+            #     (we will use it anyway)
         ordered_module_list=( $( ( module --mt ; \
 				   echo "${module_names_from_mt_lua_script}" ) \
 				 |& lua - | sort -n -k 1 \
-				     | awk '{if($2 != "StdEnv" && $2 !~ "^fml[/]" && $3 + 0 == 0) {
-					      print $2;
-                                              lastln=NR;
-					    }}
-					    {arg2=$2}
-					    END {if(NR != lastln) print arg2}' ) )
+                                     | awk '{if($3 + 0 == 0) {
+                                               lastln=NR ; 
+                                               if($2 != "StdEnv" && $2 !~ "^fml[/]" ) 
+                                                  print $2 ;
+                                               }} 
+                                            {arg2=$2} 
+                                            END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
+                                              print arg2}' ) )
         fml_info=( $(__fml_get_load_info --slow ${ordered_module_list[@]} ) )  || status=$?
-
     fi
 
     if [[ "${#fml_info[@]}" -eq 0 || "$status" -ne '0' ]] ; then
