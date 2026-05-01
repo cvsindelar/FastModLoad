@@ -252,7 +252,6 @@ EOF
             fi
 	else
 	    # fall back to the original Lmod module code
-	    echo 'Falling back' >&2
             __lmod_module_execute "${@:1}"
 	    return
         fi
