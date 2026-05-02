@@ -13,10 +13,36 @@ sources = ['v%(version)s.tar.gz']
 
 start_dir = 'FastModLoad-%(version)s'
 
+# Modules for which we will pre-generate fast modules for global use:
+builddependencies = [
+    ('R','4.4.1'),
+    ('R','4.4.2'),
+    ('RELION','4.0.2'),
+    ('RELION','5.0.0'),
+]
+
+# Pre-format the builddependencies into a string bash can understand
+# Extract just the names from the (name, version) tuples in builddependencies
+_deps_list = " ".join(["%s/%s" % (d[0], d[1]) for d in builddependencies])
+
 postinstallcmds = [
+    "type -t module || echo 'MODULE FUNCTION NOT FOUND'", # Diagnostic
+    
     # Make sure the new file/folder group permissions are inherited
     #  so that fellow group members may also create global fast modules:
+    "mkdir %(installdir)s/fml_prebuilds",
     "chmod g+s %(installdir)s/fml_prebuilds",
+
+    # Note, build_deps only exists for the duration of the following single command string:
+    "build_deps=( %s ); " % _deps_list + \
+    "my_file_name='%(installdir)s/../../../modules/all/fml/%(version)s.lua'; " + \
+    "for mod in ${build_deps[@]}; do " + \
+    "  module reset ; " + \
+    "  bash %(installdir)s/fml.sh $my_file_name init; " + \
+    "  fml --global $mod; " + \
+    "done"
+]
+
 ]
 
 sanity_check_paths = {
@@ -28,8 +54,6 @@ modluafooter = '''
 local script = pathJoin(root, "fml.sh")
 
 if myShellType() == "sh" then
---  execute {cmd="eval \"$( bash " .. script .. " " .. myFileName() .. " init " .. " )\" ; ", modeA={"load"}}
---  execute {cmd="eval $( bash " .. script .. " " .. myFileName() .. " exit " .. " ) ; ", modeA={"unload"}}
     execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ init)" ]], modeA={"load"}}
     execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ exit)" ]], modeA={"unload"}}
 else

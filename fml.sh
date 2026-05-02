@@ -706,19 +706,6 @@ function __fml_build() {
     fi
     /bin/rm ${mod_filename%.lua}.list_tmp >& /dev/null
     
-    ##################
-    # Concatenate all the .lua files required by this collection,
-    #  but strip out the 'depends_on' statements.
-    #
-    # This is predicated on 'module save' having generated a complete, self-consistent
-    #  list of modules, with a defined build order that we will use when loading.
-    #  (ordered_module_list is sorted on the build order).
-    #
-    # Each .lua code is wrapped by a 'do...done' statement to preserve
-    #  independence of the local variables
-    ##################
-    
-    echo echo mkdir -p $(dirname "${mod_filename}")
     mkdir -p $(dirname "${mod_filename}")
     
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
@@ -733,6 +720,18 @@ function __fml_build() {
     stat "${ordered_module_list[@]}" &>/dev/null \
         && eval "$build_lua_record" > "${tmpfile3}"
 
+    ##################
+    # Concatenate all the .lua files required by this collection,
+    #  but strip out the 'depends_on' statements.
+    #
+    # This is predicated on 'module save' having generated a complete, self-consistent
+    #  list of modules, with a defined build order that we will use when loading.
+    #  (ordered_module_list is sorted on the build order).
+    #
+    # Each .lua code is wrapped by a 'do...end' statement to preserve
+    #  independence of the local variables
+    ##################
+    
     printf '' > "${tmpfile2}"
     for m in ${ordered_module_list[@]}; do
         echo "do -- Scope for $m"
@@ -747,6 +746,12 @@ function __fml_build() {
     /bin/mv "${tmpfile2}" "${mod_filename}"
     /bin/mv "${tmpfile3}" "${mod_filename%.lua}".lua_record
 
+    # Loosen the highly restrictive permissions inherited from the original tmpfiles
+    # Files and folder are group writeable so all group members can use the --global option
+    #  for Fast Module building
+    chmod -R a+r $(dirname "${mod_filename}")
+    chmod -R ug+rw $(dirname "${mod_filename}")
+    
     # Now replace the slow-loading environment with the fast module
     __fml_reset --quiet "${fml_source_modfile}" purge
     # module reset
