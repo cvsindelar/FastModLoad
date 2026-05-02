@@ -323,7 +323,7 @@ EOF
         fi
 
 	# Ensure the directory exists? Should not be necessary for a fast module load or rebuild
-        # echo "mkdir -p $(dirname ${fml_filename} ) ; "
+        echo "mkdir -p $(dirname ${fml_filename} ) ; "
 
         if [[ "${update_needed}" -eq '1' ]] ; then
             echo echo 'Fast Module Update: '"fml-${requested_fml_name}"
