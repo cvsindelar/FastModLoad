@@ -963,10 +963,7 @@ function __fml_get_load_info() {
         if [[ ${#module_info[@]} -lt 2 || ${status} -ne 0 ]] ; then
             break
         fi
-        # if [[ -z "${module_info[@]}" || "${status}" -ne 0 ]] ; then
-        #     return -1
-        # fi
-        # ${#module_info[@]} noo ${module_info[0]} nee >&2
+
         load_arguments=( ${load_arguments[@]} ${module_info[0]} )
         requested_modfiles=( ${requested_modfiles[@]} ${module_info[1]} )
     done
@@ -1224,7 +1221,8 @@ function module () {
             __fml_end=\$(date +%s)
 
 	    # Zero the runtime unless a module load was requested:
-            if [[ \$(echo "\$@" | awk '\$1=="load" {print 1 ; exit} END {print 0}') -eq 0 ]] ; then
+            # if [[ "\$(echo \$@ | awk '\$1=="load" {loading=1} END {if(loading) print 1 ; else print 0}')" -eq 0 ]] ; then
+            if [[ " $* " == *" load "* ]] ; then
 	        __fml_start=0
 		__fml_end=0
 	    fi
