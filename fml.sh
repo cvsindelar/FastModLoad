@@ -6,25 +6,28 @@
 # Bash flags to be set only when executing 'bash fml.sh'
 # We also allow this script to be sourced, for debugging purposes
 if [[ "$0" == "${BASH_SOURCE}" ]]; then
+    # Exit immediately when there is an unhandled error:
     set -e
+
+    # Detect unset variables and exit immediately
     set -u
 fi
 
 function bailout() {
     echo "if [[ -n \$( declare -f module | grep fml ) ]] ; then "
-    echo "    echo 'FastModLoad: Programming error' ; "
+    echo '    [[ -n \${__fml_bailout} ]] && echo "FastModLoad: Programming error" ; '
     echo "    module --fmlrestore ; "
     echo "    module reset ; "
     echo "else "
-    echo "    echo 'FastModLoad: Bailing out' ; "
+    echo '    [[ -n \${__fml_bailout} ]] && echo "FastModLoad: Bailing out" ; '
     echo "    module reset >& /dev/null; "
     echo "fi ; "
 }
 
-# Trap errors, but only when executing 'bash fml.sh'
-# We also allow this script to be sourced, for debugging purposes
+# Trap for syntax errors in this script, but only when executing 'bash fml.sh' ;
+# we also allow this script to be sourced, for debugging purposes
 if [[ "$0" == "${BASH_SOURCE}" ]]; then
-    trap bailout ERR
+    trap 'if [ $? -ne 0 ]; then bailout; fi' EXIT
 fi
 
 ##########################
@@ -1122,6 +1125,12 @@ if [[ $# -ge 1 ]] ; then
         init)
             shift
             if [[ -z $( declare -f module | grep fml ) ]] ; then
+
+# The code below takes care of 'hijacking' the lmod module function
+# It is tested, stable, and should only be changed with extreme care.
+# Combined with the bash 'trap' commands at the top of this script, 
+#  the below code insulates 'hijacking' from any syntax errors
+#  or other unexpected errors that occur in the fml functions defined above.
 cat <<EOF
 
 # Fast module generating function

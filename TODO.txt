@@ -2,28 +2,11 @@
 
 # Priority #1
 # 1. Github README
-# 2. Finish check permissions fix in the easyconfig 'fml-1.0beta.eb': "chmod g+s %(installdir)s/fml_prebuilds"
-#    Inheritance is still not working properly:
-
-[cvs2@login1.bouchet FastModLoad]$ fml --global Python
-(Re)building the global fast module:  Python_3.12.3-GCCcore-13.3.0
-Fast Module Build: fml-Python_3.12.3-GCCcore-13.3.0
-mkdir -p /apps/software/system/software/fml/1.0beta/fml_prebuilds/Python_3.12.3-GCCcore-13.3.0
-[cvs2@login1.bouchet FastModLoad]$ ls -l /apps/software/system/software/fml/1.0beta/fml_prebuilds/Python_3.12.3-GCCcore-13.3.0/
-total 45
--rw-rw-r-- 1 cvs2 support   691 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.fancy_list
--rw-rw-r-- 1 cvs2 support   320 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.list
--rw------- 1 cvs2 support 19166 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.lua
--rw------- 1 cvs2 support 18513 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.lua_record
--rw------- 1 cvs2 cvs2     5533 May  1 18:12 fml-Python_3.12.3-GCCcore-13.3.0.mt
--rw-rw-r-- 1 cvs2 support     0 May  1 18:11 fml-Python_3.12.3-GCCcore-13.3.0.out
-
 
 # Priority #2
-# 3. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
-# 4. --name option for 'fml'
-# 5. Enhance 'fml' functionality with no arguments: alternately disable and reenable fast modules
-# 6. Warn when including conda/miniconda or EasyBuild in a fast module
+# 2. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
+# 3. --name option for 'fml'
+# 4. Warn when including conda/miniconda or EasyBuild in a fast module
 # fml options:
 #   --on : write to .config/fml/fml.config : active on
 #   --off : write to .config/fml/fml.config : active off
@@ -35,13 +18,11 @@ total 45
 #  --update/force : overwrite existing fast module even if up to date
 #  --clear : permanently delete fast module file (recognize --global)
 #  --nuke : recognize --global
-# Rename functions in fml.sh to more be more logical
-# Add to bailout function: auto execute original lmod module func after restoring it
-#   -> this necessitates not using "shift" in hijacked module func
+# 5. Rename functions in fml.sh to more be more logical
 
 $ Priority #3
 
-# 7. Implement tcsh/csh functionality ; 
+# 6. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
@@ -52,7 +33,7 @@ $ Priority #3
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# 8. Auto-deleting local fast module builds when they are identical to the global builds
+# 7. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
