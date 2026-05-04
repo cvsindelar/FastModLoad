@@ -8,6 +8,9 @@ For EasyBuild users, an easyconfig 'eb' file is provided. If you are not using E
 
 # Usage
 
+```
 ml fml        # Activates fast module loading
 module [...]  # Augmented Lmod module function, detects available accelerated modules; loads and lists these specially
 fml [...]     # Accelerate the current module environment
+```
+
