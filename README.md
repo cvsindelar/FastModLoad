@@ -13,6 +13,8 @@ ml fml        # Activates fast module loading
 module [...]  # Augmented Lmod module function:
               #    Detects available 'fast' modules
               #    Loads and lists fast modules specially
-fml [...]     # Accelerate the current module environment
+fml [...]     # Toggles between:
+              #  (1) Building/loading a fast module for the current environment
+              #  (2) Unpacking a loaded fast module back to the original Lmod environment
 ```
 
