@@ -16,7 +16,7 @@ module [...]  # Augmented Lmod module function:
               #    Modified 'module list' function for fast modules
               #    Modified 'module reset' function keeps 'fml' module loaded ('module purge' unloads 'fml')
 
-fml [...]     # Toggles between:
+fml           # Toggles between:
               #   (1) Building/loading a fast module for the current environment
               #   (2) Unpacking a loaded fast module back to the original Lmod environment
 ```
