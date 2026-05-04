@@ -1,12 +1,15 @@
 # Remaining features to implement:
 
 # Priority #1
-# 1. Github README
+# 1. Finalize Github README
 
 # Priority #2
-# 2. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
-# 3. --name option for 'fml'
-# 4. Warn when including conda/miniconda or EasyBuild in a fast module
+# 2. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
+# 3. Final testing for robustness (make unit tests)
+# 4. Enlarge the list of default global fast modules
+# 5. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
+# 6. --name option for 'fml'
+# 7. Warn when including conda/miniconda or EasyBuild in a fast module
 # fml options:
 #   --on : write to .config/fml/fml.config : active on
 #   --off : write to .config/fml/fml.config : active off
@@ -18,11 +21,11 @@
 #  --update/force : overwrite existing fast module even if up to date
 #  --clear : permanently delete fast module file (recognize --global)
 #  --nuke : recognize --global
-# 5. Rename functions in fml.sh to more be more logical
+# 8. Rename functions in fml_fun.sh to more be more logical
 
-$ Priority #3
+# Priority #3
 
-# 6. Implement tcsh/csh functionality ; 
+# 9. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
@@ -33,7 +36,7 @@ $ Priority #3
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# 7. Auto-deleting local fast module builds when they are identical to the global builds
+# 10. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
