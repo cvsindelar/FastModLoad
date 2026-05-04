@@ -13,6 +13,9 @@ if [[ "$0" == "${BASH_SOURCE}" ]]; then
     set -u
 fi
 
+# Function to exit gracefully if fml.sh crashes:
+#  'bailout' emits bash commands to restore the original Lmod module
+#  and unload the 'fml' module, if possible
 function bailout() {
     echo "if [[ -n \$( declare -f module | grep fml ) ]] ; then "
     echo '    module --fmlrestore ; '
@@ -36,9 +39,9 @@ function bailout() {
 }
 
 # Make the bailout function available to the user bash environment
-echo 'function __fml_bailout() {'
-bailout
-echo ' }  ; '
+# echo 'function __fml_bailout() {'
+# bailout
+# echo ' }  ; '
 
 # Trap for syntax errors in this script, but only when executing 'bash fml.sh' ;
 # we also allow this script to be sourced, for debugging purposes

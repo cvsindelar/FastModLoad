@@ -2,15 +2,17 @@
 
 # Priority #1
 # 1. Finalize Github README
+# 2. Fix double-printed message for the one-liner: fml --global RELION
 
 # Priority #2
-# 2. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
-# 3. Final testing for robustness (make unit tests)
-# 4. Enlarge the list of default global fast modules
-# 5. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
-# 6. --name option for 'fml'
-# 7. Warn when including conda/miniconda or EasyBuild in a fast module
-# fml options:
+
+# 1. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
+# 2. Final testing for robustness (make unit tests)
+# 3. Enlarge the list of default global fast modules
+# 4. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
+# 5. --name option for 'fml'
+# 6. Warn when including conda/miniconda or EasyBuild in a fast module
+# 7. fml options:
 #   --on : write to .config/fml/fml.config : active on
 #   --off : write to .config/fml/fml.config : active off
 #   --auto : write to .config/fml/fml.config : active auto
@@ -36,7 +38,7 @@
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# 10. Auto-deleting local fast module builds when they are identical to the global builds
+# 9. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
