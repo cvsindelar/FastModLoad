@@ -3,6 +3,29 @@
 # Priority #1
 # 1. Finalize Github README
 # 2. Fix double-printed message for the one-liner: fml --global RELION
+# 3. Edge case: bouchet Python global module does not exist on AMD nodes, and leads to failure:
+ml fml
+ml Python
+alloc --mem=8G -c 1 -p day_amd
+ml Python
+
+lua: stdin:1: <name> expected near '/'
+/bin/cp: cannot stat '/apps/software/system/software/fml/1.0beta/fml_prebuilds/Python_3.12.3-GCCcore-13.3.0/fml-Python_3.12.3-GCCcore-13.3.0.mt': No such file or directory
+Unpacking the module environment for fml-Python_3.12.3-GCCcore-13.3.0
+FastModLoad failure: falling back to Lmod...
+   module load Python
+FastModLoad: Bailing out, goodbye
+FastModLoad internal error: mismatched module environment detected: 
+
+Currently Loaded Modules:
+  1) StdEnv                           (H,S)   8) libreadline/8.2-GCCcore-13.3.0 (H)
+  2) fml-Python_3.12.3-GCCcore-13.3.0         9) Tcl/8.6.14-GCCcore-13.3.0
+  3) GCCcore/13.3.0                          10) SQLite/3.45.3-GCCcore-13.3.0
+  4) zlib/1.3.1-GCCcore-13.3.0               11) XZ/5.4.5-GCCcore-13.3.0
+  5) binutils/2.42-GCCcore-13.3.0            12) libffi/3.4.5-GCCcore-13.3.0    (H)
+  6) bzip2/1.0.8-GCCcore-13.3.0              13) OpenSSL/3
+  7) ncurses/6.5-GCCcore-13.3.0              14) Python/3.12.3-GCCcore-13.3.0
+
 
 # Priority #2
 

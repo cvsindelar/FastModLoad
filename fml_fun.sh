@@ -636,7 +636,7 @@ function __get_fml_filename() {
         # Skip the second pass of this loop ($fml_basename == $fml2_user) if we are doing a global install.
         #  This means we are going to rebuild the global fastmodule 
         if [[ -n "${fmlglobal}" ]] ; then
-            echo '(Re)building the global fast module: ' "${requested_fml_name}" >&2
+            printf 'Global ' >&2
             break
         fi
     done
