@@ -11,10 +11,10 @@ For EasyBuild users, an easyconfig 'eb' file is provided. If you are not using E
 ```
 ml fml        # Activates fast module loading
 module [...]  # Augmented Lmod module function:
-              #    Detects available 'fast' modules
-              #    Loads and lists fast modules specially
+              #    Dectects and loads available 'fast' modules in place ofthe original 'slow' Lmod ones
+              #    Modified 'module list' function for fast modules
 fml [...]     # Toggles between:
-              #  (1) Building/loading a fast module for the current environment
-              #  (2) Unpacking a loaded fast module back to the original Lmod environment
+              #   (1) Building/loading a fast module for the current environment
+              #   (2) Unpacking a loaded fast module back to the original Lmod environment
 ```
 
