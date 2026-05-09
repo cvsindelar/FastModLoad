@@ -280,7 +280,7 @@ EOF
         __lmod_module_execute "load fml-${requested_fml_name}"
 
 	echo 'if [[ $? -eq 0 ]] ; then '
-        echo "    [[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
+        echo "    if [[ -f ${fml_filename%.lua}.out ]] ; then cat ${fml_filename%.lua}.out ; fi ; "
 	echo 'else '
         echo     echo "Fast Module failed to load: fml-${requested_fml_name}"
         echo     echo "Falling back to Lmod:"
@@ -302,7 +302,12 @@ EOF
 	fi
 	
         echo '__fml_start=$(date +%s) ; '
-        __lmod_module_execute "$@ >& ${fml_filename%.lua}.out"
+
+        __lmod_module_execute "$@ >& ${fml_filename%.lua}.out_tmp"
+
+	echo "awk '/Lmod Warning/ {printing=1} printing == 1' ${fml_filename%.lua}.out_tmp > ${fml_filename%.lua}.out"
+	echo "/bin/rm ${fml_filename%.lua}.out_tmp"
+
         echo '__fml_end=$(date +%s) ; '
         
         echo "cat ${fml_filename%.lua}.out ; "
@@ -473,7 +478,7 @@ function __fml() {
         __lmod_module_execute "load fml-${requested_fml_name}"
 
 	echo 'if [[ $? -eq 0 ]] ; then '
-        echo "    [[ -f ${fml_filename%.lua}.out ]] && cat ${fml_filename%.lua}.out ; "
+        echo "    if [[ -f ${fml_filename%.lua}.out ]] ; then cat ${fml_filename%.lua}.out ; fi ; "
 	echo 'else '
         echo     echo "Fast Module failed to load: fml-${requested_fml_name}"
         echo     echo "Falling back to Lmod:"
@@ -489,11 +494,17 @@ function __fml() {
 
         echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
     
-        echo '__fml_start=$(date +%s)'
-        __lmod_module_execute "$@ >& ${fml_filename%.lua}.out"
-        echo '__fml_end=$(date +%s)'
-        
-        echo "cat ${fml_filename%.lua}.out ; "
+        if [[ ${autofml} -ne 1 ]] ; then
+            echo '__fml_start=$(date +%s)'
+
+            __lmod_module_execute "$@ >& ${fml_filename%.lua}.out_tmp"
+
+	    echo "awk '/Lmod Warning/ {printing=1} printing == 1' ${fml_filename%.lua}.out_tmp > ${fml_filename%.lua}.out"
+	    echo "/bin/rm ${fml_filename%.lua}.out_tmp"
+
+            echo '__fml_end=$(date +%s)'
+	    echo "cat ${fml_filename%.lua}.out ; "
+	fi
 
 	# Build the module
         cat <<EOF
