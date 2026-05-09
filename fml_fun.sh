@@ -425,7 +425,7 @@ function __fml() {
             #  -> note the last 2 lines in the awk script below (END clause) handle the edge
             #     case where for some reason the last listed module is not a user-requested one
             #     (we will use it anyway)
-        ordered_module_list=( $( ( module --mt ; \
+        load_arguments=( $( ( module --mt ; \
 				   echo "${module_names_from_mt_lua_script}" ) \
 				 |& lua - | sort -n -k 1 \
                                      | awk '{if($3 + 0 == 0) {
@@ -436,7 +436,7 @@ function __fml() {
                                             {arg2=$2} 
                                             END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
                                               print arg2}' ) )
-        fml_info=( $(__fml_get_load_info --slow ${ordered_module_list[@]} ) )  || status=$?
+        fml_info=( $(__fml_get_load_info --slow ${load_arguments[@]} ) )  || status=$?
     fi
 
     if [[ "${#fml_info[@]}" -eq 0 || "$status" -ne '0' ]] ; then
@@ -498,6 +498,9 @@ function __fml() {
 	# Build the module
         cat <<EOF
 eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} build ${requested_fml_name} ${fml_filename})"
+
+echo "Complete. To rapidly load this environment in the future, do:"
+echo "    module reset ; module load ${load_arguments[@]}"
 EOF
     fi
 }
