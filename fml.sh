@@ -134,7 +134,7 @@ EOF
             fi
 
             if [[ "${fml_active}" == "off" ]] ; then
-                echo "Fast module loading is inactive. Please activate with 'fml --on'"
+                echo echo "Fast module loading is inactive. Please activate with 'fml --on'"
                 exit
             fi
             
@@ -170,21 +170,16 @@ EOF
             ;;
         
         exit)
-            echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
-            echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
-            # echo "echo 'Unpacking the module environment for fml-'${fml_source_modfile}"
             source "${fml_base_dir}"/fml_fun.sh
-            __fml_unpack "${fml_source_modfile}"
-
+            __fml_unpack --nofml "${fml_source_modfile}"
             if [[ $? -ne 0 ]]; then
-                echo blarchifer >&2
                 echo 'echo "Warning: unable to restore the full lmod environment"'
                 echo 'return 1'
             fi
 
-            # fml_name=$(basename $(dirname "${fml_source_modfile}"))
-            # fml_version=$(basename "${fml_source_modfile}")
-            # __lmod_module_execute "unload ${fml_name}/${fml_version}"
+            echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
+            echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
+            # echo "echo 'Unpacking the module environment for fml-'${fml_source_modfile}"
 
             ;;
         

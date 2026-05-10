@@ -769,16 +769,15 @@ function __fml_unpack() {
     local mt_file
     local tmpfile
     
-    fml_source_modfile="$1"
-    fml_source_modfile="${fml_source_modfile%.lua}"
-
-    shift
-    
     nofml=0
     if [[ $# -gt 0 && "$1" == "--nofml" ]] ; then
         nofml=1
         shift
     fi
+    
+    fml_source_modfile="$1"
+    fml_source_modfile="${fml_source_modfile%.lua}"
+    shift
     
     status=0
     if [[ $# -gt 0 ]] ; then
@@ -810,6 +809,12 @@ function __fml_unpack() {
     
     echo "/bin/rm ${tmpfile} ; "
 
+    if [[ ${nofml} -eq 1 ]] ; then
+	fml_name=$(basename $(dirname "${fml_source_modfile}"))
+	fml_version=$(basename "${fml_source_modfile}")
+	__lmod_module_execute "--force unload ${fml_name}/${fml_version}"
+    fi
+    
     if [[ "${status}" -ne 0 ]] ; then
         return "${status}"
     fi
