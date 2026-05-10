@@ -328,7 +328,7 @@ function module () {
                 unset __fml_module_args
 
                 if [[ "\${__fml_status}" -ne 0 ]] ; then
-                    echo "FastModLoad failure:::: falling back to Lmod.. "
+                    echo "FastModLoad failure: falling back to Lmod.. "
                     echo module --lmod "\$@"
                     module --lmod "\$@"
                 fi
