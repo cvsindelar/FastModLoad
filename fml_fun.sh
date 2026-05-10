@@ -223,7 +223,9 @@ else
                                             END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
                                               print arg2}' ) )
 
-            echo "echo 'Unpacking the module environment for fml-'${old_fml_name} (control-C to exit)"
+            echo <<EOF
+Unpacking the module environment for fml-${old_fml_name} (control-C to exit)
+EOF
             __fml_unpack "${old_fml_modfile}"
             if [[ $? -ne 0 ]] ; then
                 echo 'echo "Warning: unable to restore the full lmod environment"'

@@ -118,8 +118,8 @@ if [[ $# -ge 1 ]] ; then
                     source "${fml_base_dir}"/fml_fun.sh
                     __fml_unpack "${fml_source_modfile}"
                     if [[ $? -ne 0 ]] ; then
-                        echo 'echo "Warning: unable to restore the full lmod environment"'
-                        echo 'return 1'
+                        echo 'echo "Warning: unable to restore the full lmod environment" ; '
+                        echo 'return 1 ; '
                     fi
                 fi
 		
@@ -328,7 +328,7 @@ function module () {
                 unset __fml_module_args
 
                 if [[ "\${__fml_status}" -ne 0 ]] ; then
-                    echo "FastModLoad failure: falling back to Lmod.. "
+                    echo "FastModLoad failure:::: falling back to Lmod.. "
                     echo module --lmod "\$@"
                     module --lmod "\$@"
                 fi
