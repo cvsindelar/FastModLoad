@@ -112,15 +112,7 @@ if [[ $# -ge 1 ]] ; then
             fi
 
             if [[ $# -ge 1 && ( "$1" == "--on" || "$1" == "--off" ) ]] ; then
-                # Update the config file
-                awk -v active=$1 '$1 != "active" {print} END {print "active "substr(active,3,length(active-2))}' \
-                    ~/.config/fml/config > ~/.config/fml/temp
-                mv ~/.config/fml/temp ~/.config/fml/config
 
-                # Turn on/off fast module loading
-                cat <<EOF
-eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
-EOF
                 # If turning off, unpack any fast modules to the regular lmod environment
                 if [[ "$1" == "--off" ]] ; then
                     source "${fml_base_dir}"/fml_fun.sh
@@ -130,6 +122,16 @@ EOF
                         echo 'return 1'
                     fi
                 fi
+		
+                # Update the config file
+                awk -v active=$1 '$1 != "active" {print} END {print "active "substr(active,3,length(active-2))}' \
+                    ~/.config/fml/config > ~/.config/fml/temp
+                mv ~/.config/fml/temp ~/.config/fml/config
+
+                # Turn on/off fast module loading
+                cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
+EOF
                 exit
             fi
 
