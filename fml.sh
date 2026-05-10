@@ -155,12 +155,8 @@ EOF
         module)
             shift
             
-            if [[ "${fml_active}" == "off" ]] ; then
-                module "$@"
-            else
-                source "${fml_base_dir}"/fml_fun.sh
-                __fml_module "${fml_source_modfile}" "$@"
-            fi
+            source "${fml_base_dir}"/fml_fun.sh
+            __fml_module "${fml_source_modfile}" "$@"
             ;;
         
         build)
