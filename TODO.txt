@@ -1,9 +1,6 @@
 # Remaining features to implement:
 
 # Priority #1
-# 0. No more unloading/reloading of fml by itself:
-#      - use sticky bit
-#      - Bailout: turns fml off rather than unloading fml
 # 2. Finalize Github README
 # 3. Edge case: bouchet Python global module does not exist on AMD nodes, and leads to failure:
 ml fml
