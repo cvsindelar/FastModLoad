@@ -124,7 +124,7 @@ if [[ $# -ge 1 ]] ; then
                 fi
 		
                 # Update the config file
-                awk -v active=$1 '$1 != "active" {print} END {print "active "substr(active,3,length(active-2))}' \
+                awk -v active="$1" '$1 != "active" {print} END {print "active "substr(active,3,length(active)-2)}' \
                     ~/.config/fml/config > ~/.config/fml/temp
                 mv ~/.config/fml/temp ~/.config/fml/config
 
