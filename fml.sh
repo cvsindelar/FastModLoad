@@ -353,7 +353,6 @@ function module () {
 
 echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"
 EOF
-                fi
             fi
             ;;
         
