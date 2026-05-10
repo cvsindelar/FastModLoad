@@ -60,23 +60,6 @@ function __fml_module() {
     local first_mod_spec
 
     ######################
-    # Fall back to Lmod if fast module loading is turned off in the config file
-    ######################
-    fml_active=$( awk '
-$1 == "active" {active=$2} 
-END {
-if(active == "on") 
-  print("on") 
-else 
- print("off")
-}' ~/.config/fml/config )
-
-    if [[ "${fml_active}" == "off" ]] ; then
-        __lmod_module_execute "$@"
-        return
-    fi
-    
-    ######################
     # Read function inputs
     ######################
     fml_source_modfile="$1"
@@ -139,11 +122,23 @@ EOF
         __fml_reset "${fml_source_modfile}" reset
         return
     fi
+
     ######################
-    # If no load requested, pass the command through to Lmod
+    # If no load requested, or if fast module loading is turned off in the config file,
+    #  pass the command through to Lmod
     ######################
     first_load_arg=$(echo "$@" | awk '$1=="load" || $1=="unload" {gsub("/", "_", $2); if($2!="") print $2; exit}')
-    if [[ -z ${first_load_arg} ]] ; then
+
+    fml_active=$( awk '
+$1 == "active" {active=$2} 
+END {
+if(active == "on") 
+  print("on") 
+else 
+ print("off")
+}' ~/.config/fml/config )
+    
+    if [[ -z ${first_load_arg} || "${fml_active}" == "off" ]] ; then
         __lmod_module_execute "$@"
         return
     fi
