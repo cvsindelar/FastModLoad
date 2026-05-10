@@ -226,8 +226,9 @@ else
                 cat <<EOF
 echo "Fast Module Loading inactivated. To turn off Fast Module Loading, do 'fml --on'"
 EOF
-            else
-                if [[ -z $( declare -f module | grep fml ) ]] ; then
+            fi
+            
+            if [[ -z $( declare -f module | grep fml ) ]] ; then
 cat <<EOF
 ##########################################
 # Hijacked Lmod module function
