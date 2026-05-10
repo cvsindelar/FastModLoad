@@ -772,9 +772,6 @@ function __fml_unpack() {
     fml_source_modfile="$1"
     fml_source_modfile="${fml_source_modfile%.lua}"
 
-    fml_path=$(dirname $(dirname "${fml_source_modfile}"))
-    fml_name=$(basename $(dirname "${fml_source_modfile}"))
-    fml_version=$(basename "${fml_source_modfile}")
     shift
     
     nofml=0
@@ -812,11 +809,6 @@ function __fml_unpack() {
     __lmod_module_execute "restore '$(basename "${tmpfile}")' >& /dev/null"
     
     echo "/bin/rm ${tmpfile} ; "
-
-    # Unload fml afterwards, if requested
-    if [[ "${nofml}" == 1 ]] ; then
-        __lmod_module_execute "unload ${fml_name}/${fml_version}"
-    fi
 
     if [[ "${status}" -ne 0 ]] ; then
         return "${status}"

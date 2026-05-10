@@ -17,25 +17,28 @@ fi
 #  'bailout' emits bash commands to restore the original Lmod module
 #  and unload the 'fml' module, if possible
 function bailout() {
-    echo "if [[ -n \$( declare -f module | grep fml ) ]] ; then "
-    echo '    module --fmlrestore ; '
-    echo 'else '
-    echo '    echo "FastModLoad: Programming error, goodbye" ; '
-    echo 'fi ; '
+    cat <<EOF
+    if [[ -n \$( declare -f module | grep fml ) ]] ; then
+        module --fmlrestore ;
+    else
+        echo "FastModLoad: Programming error, goodbye"
+    fi
     
-    echo 'if [[ ${#__fml_module_args[@]} -gt 0 ]] ; then '
-    echo '    __fml_module_args_tmp=("${__fml_module_args[@]}") ; '
-    echo "    unset __fml_module_args ; "
-    echo '    echo "FastModLoad failure: falling back to Lmod..." ; '
-    echo "    echo '   'module \${__fml_module_args_tmp[@]} ; "
-    echo "    module \${__fml_module_args_tmp[@]} ; "
-    echo "    unset __fml_module_args_tmp ; "
-    echo 'fi ; '
+    if [[ ${#__fml_module_args[@]} -gt 0 ]] ; then
+        __fml_module_args_tmp=("${__fml_module_args[@]}")
+        unset __fml_module_args
+        echo "FastModLoad failure: falling back to Lmod..."
+        echo '   'module \${__fml_module_args_tmp[@]}
+        module \${__fml_module_args_tmp[@]}
+        unset __fml_module_args_tmp
+    fi
     
-    echo "if [[ -n \$( module --redirect --terse list | awk '\$0 ~ /^fml\//' ) ]] ; then "
-    echo '    echo "FastModLoad: Bailing out, goodbye" ; '
-    echo "    module unload fml ; "
-    echo "fi ; " ; 
+    if [[ -n \$( module --redirect --terse list | awk '\$0 ~ /^fml\//' ) ]] ; then
+        echo "FastModLoad: Bailing out, goodbye"
+	eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
+	# echo "    module unload fml ; "
+    fi ; 
+EOF
 }
 
 # Make the bailout function available to the user bash environment
@@ -70,7 +73,21 @@ fml_prebuilds_dir=~/".config/fml/fml_prebuilds"
 if [[ $# -ge 1 ]] ; then
     fml_source_modfile="$1"
     shift
+else
+    __bailout
 fi
+
+# Make sure the config file exists and set fml_active to reflect whether fast module loading is active
+mkdir -p ~/.config/fml
+touch ~/.config/fml/config
+fml_active=$( awk '
+$1 == "active" {active=$2} 
+END {
+if(active == "on") 
+  print("on") 
+else 
+ print("off")
+}' ~/.config/fml/config )
 
 if [[ $# -ge 1 ]] ; then
     case "$1" in
@@ -79,7 +96,7 @@ if [[ $# -ge 1 ]] ; then
             if [[ $# -ge 1  && "$1" == "--help" ]] ; then
                 shift
                 echo 'Usage:' >&2
-		echo '    fml [--global]         Make a Fast Module for the current module environment and load it' >&2
+                echo '    fml [--global]         Make a Fast Module for the current module environment and load it' >&2
                 echo '                           Alternatively, unpack the currently loaded Fast Module to restore' >&2
                 echo '                           the original Lmod environment' >&2
                 echo '' >&2
@@ -93,6 +110,33 @@ if [[ $# -ge 1 ]] ; then
                 echo '' >&2
                 exit
             fi
+
+            if [[ $# -ge 1 && ( "$1" == "--on" || "$1" == "--off" ) ]] ; then
+                # Update the config file
+                awk -v active=$1 '$1 != "active" {print} END {print "active "substr(active,3,length(active-2))}' \
+                    ~/.config/fml/config > ~/.config/fml/temp
+                mv ~/.config/fml/temp ~/.config/fml/config
+
+                # Turn on/off fast module loading
+                cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
+EOF
+                # If turning off, unpack any fast modules to the regular lmod environment
+                if [[ "$1" == "--off" ]] ; then
+                    source "${fml_base_dir}"/fml_fun.sh
+                    __fml_unpack "${fml_source_modfile}"
+                    if [[ $? -ne 0 ]] ; then
+                        echo 'echo "Warning: unable to restore the full lmod environment"'
+                        echo 'return 1'
+                    fi
+                fi
+                exit
+            fi
+
+            if [[ "${fml_active}" == "off" ]] ; then
+                echo "Fast module loading is inactive. Please activate with 'fml --on'"
+                exit
+            fi
             
             fmlglobal=
             if [[ $# -ge 1 && "$1" == "--global" ]] ; then
@@ -104,42 +148,59 @@ if [[ $# -ge 1 ]] ; then
                     exit
                 fi
             fi
-	    source "${fml_base_dir}"/fml_fun.sh
+            source "${fml_base_dir}"/fml_fun.sh
             __fml "${fml_source_modfile}" "${fmlglobal}" load "$@"
             ;;
         
         module)
             shift
-	    source "${fml_base_dir}"/fml_fun.sh
-            __fml_module "${fml_source_modfile}" "$@"
+            
+            if [[ "${fml_active}" == "off" ]] ; then
+                module "$@"
+            else
+                source "${fml_base_dir}"/fml_fun.sh
+                __fml_module "${fml_source_modfile}" "$@"
+            fi
             ;;
         
         build)
             shift
-	    source "${fml_base_dir}"/fml_fun.sh
+            source "${fml_base_dir}"/fml_fun.sh
             __fml_build "${fml_source_modfile}" "$@"
             ;;
         
         exit)
-            echo '[[ -n $( declare -f module | grep fml ) ]] && module --fmlrestore ; '
-            echo '[[ -n $( declare -f fml ) ]] && unset -f fml ; '
+            echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
+            echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
             # echo "echo 'Unpacking the module environment for fml-'${fml_source_modfile}"
-	    
-	    source "${fml_base_dir}"/fml_fun.sh
-            __fml_unpack "${fml_source_modfile}" --nofml
-            if [[ $? -ne 0 ]] ; then
+            source "${fml_base_dir}"/fml_fun.sh
+            __fml_unpack "${fml_source_modfile}"
+
+            if [[ $? -ne 0 ]]; then
+                echo blarchifer >&2
                 echo 'echo "Warning: unable to restore the full lmod environment"'
                 echo 'return 1'
             fi
+
+            # fml_name=$(basename $(dirname "${fml_source_modfile}"))
+            # fml_version=$(basename "${fml_source_modfile}")
+            # __lmod_module_execute "unload ${fml_name}/${fml_version}"
+
             ;;
         
         init)
             shift
-            if [[ -z $( declare -f module | grep fml ) ]] ; then
 
-cat <<EOF
+            # Manage the config file that controls whether fast modules are active
+            if [[ ! -f ~/.config/fml/config ]] ; then
+                mkdir -p ~/.config/fml/
+                cat > ~/.config/fml/config <<EOF
+active on
+EOF
+            fi
 
-# Fast module generating function
+            # Define the master fml function
+cat <<EOF           
 function fml () {
     local __fml_status
     unset __fml_status
@@ -152,6 +213,31 @@ function fml () {
     fi
 }
 
+# Enable autocompletion for fml the same as 'ml':
+t=( \$(complete -p ml) )
+if [ "\$(type -t \${t[2]})" = 'function' ]; then
+    complete -F "\${t[2]}" fml
+fi
+
+EOF
+            # Allow user to turn fml shortcuts on and off
+            fml_active=$( awk '
+$1 == "active" {active=$2} 
+END {
+if(active == "on") 
+  print("on") 
+else 
+ print("off")
+}' ~/.config/fml/config )
+
+            if [[ ${fml_active} == "off" ]] ; then
+                echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
+                cat <<EOF
+echo "Fast Module Loading inactivated. To turn off Fast Module Loading, do 'fml --on'"
+EOF
+            else
+                if [[ -z $( declare -f module | grep fml ) ]] ; then
+cat <<EOF
 ##########################################
 # Hijacked Lmod module function
 # The code below is tested, stable, and should only be changed with extreme care.
@@ -233,21 +319,21 @@ function module () {
             if [[ \${fmldebug} -eq 1 ]] ; then
                 echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )" >&2
             else
-	        # Preserve input arguments in case fml.sh crashes
-	  	#  -> in that case, fml.sh will trap the error and try
-		#      the original lmod module command with __fml_module_args
-		__fml_module_args=("\$@")
+                # Preserve input arguments in case fml.sh crashes
+                #  -> in that case, fml.sh will trap the error and try
+                #      the original lmod module command with __fml_module_args
+                __fml_module_args=("\$@")
                 eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )"
-		if [[ \$? -ne 0 ]] ; then
-		    __fml_status=1
-		fi
-		unset __fml_module_args
+                if [[ \$? -ne 0 ]] ; then
+                    __fml_status=1
+                fi
+                unset __fml_module_args
 
-		if [[ "\${__fml_status}" -ne 0 ]] ; then
-    		    echo "FastModLoad failure: falling back to Lmod.. "
-            	    echo module --lmod "\$@"
-            	    module --lmod "\$@"
-		fi
+                if [[ "\${__fml_status}" -ne 0 ]] ; then
+                    echo "FastModLoad failure: falling back to Lmod.. "
+                    echo module --lmod "\$@"
+                    module --lmod "\$@"
+                fi
             fi
         else
             # Otherwise, fml.sh wasn't executed and we fall through to the original Lmod module function
@@ -256,12 +342,12 @@ function module () {
             module --lmod "\$@"
             __fml_end=\$(date +%s)
 
-	    # Zero the runtime unless a module load was requested:
+            # Zero the runtime unless a module load was requested:
             # if [[ "\$(echo \$@ | awk '\$1=="load" {loading=1} END {if(loading) print 1 ; else print 0}')" -eq 0 ]] ; then
             if [[ " $* " == *" load "* ]] ; then
-	        __fml_start=0
-		__fml_end=0
-	    fi
+                __fml_start=0
+                __fml_end=0
+            fi
         fi
 
         # Check for excessively slow module loads
@@ -273,16 +359,9 @@ function module () {
     fi
 }
 
-# Enable autocompletion for fml the same as 'ml':
-t=( \$(complete -p ml) )
-if [ "\$(type -t \${t[2]})" = 'function' ]; then
-    complete -F "\${t[2]}" fml
-fi
-
-echo 'Fast Module Loading is active.'
-echo "Note: to turn off Fast Module Loading, do 'module purge' or 'ml -fml'"
-
+echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"
 EOF
+                fi
             fi
             ;;
         
