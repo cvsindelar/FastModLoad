@@ -226,6 +226,10 @@ else
                 cat <<EOF
 echo "Fast Module Loading inactivated. To turn off Fast Module Loading, do 'fml --on'"
 EOF
+	    else
+		cat <<EOF
+echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"
+EOF
             fi
             
             if [[ -z $( declare -f module | grep fml ) ]] ; then
@@ -350,8 +354,6 @@ function module () {
         fi
     fi
 }
-
-echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"
 EOF
             fi
             ;;
