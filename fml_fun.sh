@@ -59,6 +59,26 @@ function __fml_module() {
     local update_needed
     local first_mod_spec
 
+    ######################
+    # Fall back to Lmod if fast module loading is turned off in the config file
+    ######################
+    fml_active=$( awk '
+$1 == "active" {active=$2} 
+END {
+if(active == "on") 
+  print("on") 
+else 
+ print("off")
+}' ~/.config/fml/config )
+
+    if [[ "${fml_active}" == "off" ]] ; then
+        __lmod_module_execute "$@"
+        return
+    fi
+    
+    ######################
+    # Read function inputs
+    ######################
     fml_source_modfile="$1"
     shift
 
