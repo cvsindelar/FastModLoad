@@ -77,8 +77,15 @@ else
     __bailout
 fi
 
-# Make sure the config file exists and set fml_active to reflect whether fast module loading is active
+# Manage the config file that controls whether fast modules are active
 mkdir -p ~/.config/fml
+if [[ ! -f ~/.config/fml/config ]] ; then
+    mkdir -p ~/.config/fml/
+    cat > ~/.config/fml/config <<EOF
+active on
+EOF
+fi
+
 touch ~/.config/fml/config
 fml_active=$( awk '
 $1 == "active" {active=$2} 
@@ -183,14 +190,6 @@ EOF
         
         init)
             shift
-
-            # Manage the config file that controls whether fast modules are active
-            if [[ ! -f ~/.config/fml/config ]] ; then
-                mkdir -p ~/.config/fml/
-                cat > ~/.config/fml/config <<EOF
-active on
-EOF
-            fi
 
             # Define the master fml function
 cat <<EOF           
