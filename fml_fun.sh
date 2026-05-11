@@ -41,7 +41,7 @@ build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module
 #   by the calling shell (bash) process.
 ######################
 function __fml_module() {
-    local fml_source_modfile
+    local fml_source_modfile_local
     local fmlglobal
     local fmldebug
     local load_arguments
@@ -62,7 +62,7 @@ function __fml_module() {
     ######################
     # Read function inputs
     ######################
-    fml_source_modfile="$1"
+    fml_source_modfile_local="$1"
     shift
 
     ######################
@@ -119,7 +119,7 @@ EOF
     # If "reset" is requested, reload fml after
     ######################
     if [[ " $@ " == *" reset "* ]] ; then
-        __fml_reset "${fml_source_modfile}" reset
+        __fml_reset "${fml_source_modfile_local}" reset
         return
     fi
 
@@ -334,7 +334,7 @@ EOF
 	    echo '__fml_start=0 ; '
 	    echo '__fml_end=0 ; '
             cat <<EOF
-eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} build ${requested_fml_name} ${fml_filename})"
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
 EOF
 	fi
     fi
@@ -346,7 +346,7 @@ EOF
 #   by the calling shell (bash) process.
 ######################
 function __fml() {
-    local fml_source_modfile
+    local fml_source_modfile_local
     local fmlglobal
     local fmldebug
     local load_arguments
@@ -364,7 +364,7 @@ function __fml() {
     local update_needed
     local first_mod_spec
 
-    fml_source_modfile="$1"
+    fml_source_modfile_local="$1"
     shift
 
     ######################
@@ -486,7 +486,7 @@ function __fml() {
 
         if [[ ${autofml} -eq 1 ]] ; then
             # echo echo "Fast module already exists and is up to date: fml-${requested_fml_name}"
-            __fml_reset "${fml_source_modfile}" reset
+            __fml_reset "${fml_source_modfile_local}" reset
         fi
 
 	echo "Fast Module Load: fml-${requested_fml_name}" >&2
@@ -525,7 +525,7 @@ function __fml() {
 
 	# Build the module
         cat <<EOF
-eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} build ${requested_fml_name} ${fml_filename})"
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
 
 echo "Complete. To rapidly load this environment in the future, do:"
 echo "    module reset ; module load ${load_arguments[@]}"
@@ -549,7 +549,7 @@ EOF
 # Perform a 'module purge' or 'module reset', then reload fml after
 ######################
 function __fml_reset() {
-    local fml_source_modfile
+    local fml_source_modfile_local
     local fml_path
     local fml_version
     local func
@@ -561,12 +561,12 @@ function __fml_reset() {
         shift
     fi
     
-    fml_source_modfile="$1"
-    fml_source_modfile="${fml_source_modfile%.lua}"
+    fml_source_modfile_local="$1"
+    fml_source_modfile_local="${fml_source_modfile_local%.lua}"
 
-    fml_path=$(dirname $(dirname "${fml_source_modfile}"))
-    fml_name=$(basename $(dirname "${fml_source_modfile}"))
-    fml_version=$(basename "${fml_source_modfile}")
+    fml_path=$(dirname $(dirname "${fml_source_modfile_local}"))
+    fml_name=$(basename $(dirname "${fml_source_modfile_local}"))
+    fml_version=$(basename "${fml_source_modfile_local}")
     shift
     
     if [[ $# -lt 1 ]] ; then
@@ -683,7 +683,7 @@ function __get_fml_filename() {
 #  needed. No 'module' commands are invoked or requested by this function.
 ######################
 function __fml_build() {
-    local fml_source_modfile
+    local fml_source_modfile_local
     local mod_name
     local mod_filename
     local tmpfile1
@@ -691,7 +691,7 @@ function __fml_build() {
     local tmpfile3
     local ordered_module_list
     
-    fml_source_modfile="$1"
+    fml_source_modfile_local="$1"
     shift
     
     if [[ $# -lt 2 ]] ; then
@@ -760,7 +760,7 @@ function __fml_build() {
     chmod -R ug+rw $(dirname "${mod_filename}")
     
     # Now replace the slow-loading environment with the fast module
-    __fml_reset --quiet "${fml_source_modfile}" purge
+    __fml_reset --quiet "${fml_source_modfile_local}" purge
     # module reset
 
     # Restore fml
@@ -776,7 +776,7 @@ function __fml_build() {
 }
 
 function __fml_unpack() {
-    local fml_source_modfile
+    local fml_source_modfile_local
     local fml_path
     local fml_name
     local fml_version
@@ -792,8 +792,8 @@ function __fml_unpack() {
         shift
     fi
     
-    fml_source_modfile="$1"
-    fml_source_modfile="${fml_source_modfile%.lua}"
+    fml_source_modfile_local="$1"
+    fml_source_modfile_local="${fml_source_modfile_local%.lua}"
     shift
     
     status=0
@@ -827,8 +827,8 @@ function __fml_unpack() {
     echo "/bin/rm ${tmpfile} ; "
 
     if [[ ${nofml} -eq 1 ]] ; then
-	fml_name=$(basename $(dirname "${fml_source_modfile}"))
-	fml_version=$(basename "${fml_source_modfile}")
+	fml_name=$(basename $(dirname "${fml_source_modfile_local}"))
+	fml_version=$(basename "${fml_source_modfile_local}")
 	__lmod_module_execute "--force unload ${fml_name}/${fml_version}"
     fi
     

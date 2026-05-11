@@ -3,6 +3,15 @@
 # Chuck Sindelar, Yale Center for Research Computing (March 2026)
 ######################
 
+# fml.sh must be provided the location of its corresponding .lua modulefile
+if [[ $# -ge 1 ]] ; then
+    fml_source_modfile="$1"
+    shift
+else
+    echo 'Programming error: fml.sh cannot determine its home location' >&1
+    exit 1
+fi
+
 # Bash flags to be set only when executing 'bash fml.sh'
 # We also allow this script to be sourced, for debugging purposes
 if [[ "$0" == "${BASH_SOURCE}" ]]; then
@@ -16,6 +25,10 @@ fi
 # Function to exit gracefully if fml.sh crashes:
 #  'bailout' emits bash commands to restore the original Lmod module
 #  and unload the 'fml' module, if possible
+
+# Declare this variable to avoid errors in the bailout function if it wasn't set yet
+# declare -a __fml_module_args=()
+
 function bailout() {
     cat <<EOF
     if [[ -n \$( declare -f module | grep fml ) ]] ; then
@@ -24,22 +37,21 @@ function bailout() {
         echo "FastModLoad: Programming error, goodbye"
     fi
     
-    if [[ ${#__fml_module_args[@]} -gt 0 ]] ; then
-        __fml_module_args_tmp=("${__fml_module_args[@]}")
+    if [[ \${#__fml_module_args[@]} -gt 0 ]] ; then
+        __fml_module_args_tmp=("\${__fml_module_args[@]}")
         unset __fml_module_args
         echo "FastModLoad failure: falling back to Lmod..."
         echo '   'module \${__fml_module_args_tmp[@]}
         module \${__fml_module_args_tmp[@]}
         unset __fml_module_args_tmp
-    fi
-    
-    if [[ -n \$( module --redirect --terse list | awk '\$0 ~ /^fml\//' ) ]] ; then
-        echo "FastModLoad: Bailing out, goodbye"
-	eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
-	# echo "    module unload fml ; "
-    fi ; 
+    fi    
 EOF
 }
+    # if [[ -n \$( module --redirect --terse list | awk '\$0 ~ /^fml\//' ) ]] ; then
+    #     echo "FastModLoad: Bailing out, goodbye" ; 
+    # fi ; 
+        # eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
+	# echo "    module unload fml ; "
 
 # Make the bailout function available to the user bash environment
 # echo 'function __fml_bailout() {'
@@ -68,14 +80,6 @@ fml_prebuilds_dir=~/".config/fml/fml_prebuilds"
 # Now execute the specified commands: fml.sh <fml_source_modfile> <cmd>
 #   where <cmd> is one of fml, module, init, exit, build
 ######################
-
-# fml.sh must be provided the location of its corresponding .lua modulefile
-if [[ $# -ge 1 ]] ; then
-    fml_source_modfile="$1"
-    shift
-else
-    __bailout
-fi
 
 # Manage the config file that controls whether fast modules are active
 mkdir -p ~/.config/fml
