@@ -104,18 +104,18 @@ if [[ $# -ge 1 ]] ; then
     case "$1" in
         fml)
             shift
-            if [[ $# -ge 1  && "$1" == "--help" ]] ; then
+            if [[ $# -ge 1  && ( "$1" == "--help" || "$1" == "-h" ) ]] ; then
                 shift
                 echo 'Usage:' >&2
-                echo '    fml [--global]         Make a Fast Module for the current module environment and load it' >&2
+                echo '    fml                    Make a Fast Module for the current module environment and load it' >&2
                 echo '                           Alternatively, unpack the currently loaded Fast Module to restore' >&2
                 echo '                           the original Lmod environment' >&2
-                echo '' >&2
-                echo '    fml [--global] <module 1> [<module 2> ...]' >&2
+                echo '    fml <module 1> [<module 2> ...]' >&2
                 echo '                           Make a Fast Module for the listed modules' >&2
-                echo 'Options:' >&2
-                echo '--help                     This help message' >&2
-                echo "--global                   Make the new fast module available to all users" >&2
+                echo '    fml --help             This help message' >&2
+                echo '' >&2
+                echo 'Administrator option:' >&2
+                echo "    fml --global [...]     Make the new fast module available to all users" >&2
                 echo '                            (requires write permission to the fml app folder:' >&2
                 echo "                             ${fml_base_dir} )" >&2
                 echo '' >&2
