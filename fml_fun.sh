@@ -222,11 +222,7 @@ else
                                             {arg2=$2} 
                                             END {if(NR != lastln && arg2 != "StdEnv" && arg2 !~ "^fml[/]")
                                               print arg2}' ) )
-
-            echo <<EOF
-Unpacking the module environment for fml-${old_fml_name} (control-C to exit)
-EOF
-            __fml_unpack "${old_fml_modfile}"
+            __fml_unpack "${fml_source_modfile_local}" || status=$?
             if [[ $? -ne 0 ]] ; then
                 echo 'echo "Warning: unable to restore the full lmod environment"'
                 echo 'return 1'
@@ -427,9 +423,9 @@ function __fml() {
         if [[ -n "${old_fml_name}" ]] ; then
             if [[ "${#load_arguments[@]}" -eq 0 ]] ; then
                 # If a Fast Module is loaded, unpack it
-                echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
+                # echo "echo 'Unpacking the module environment for fml-'${old_fml_name}"
 		status=0
-                __fml_unpack "${old_fml_modfile}" || status=$?
+                __fml_unpack "${fml_source_modfile_local}" || status=$?
                 return $status
             else
                 echo echo "Modules are already loaded. Please use 'fml' by itself or do 'module reset' first."
@@ -785,7 +781,7 @@ function __fml_unpack() {
     local fml_info
     local mt_file
     local tmpfile
-    
+
     nofml=0
     if [[ $# -gt 0 && "$1" == "--nofml" ]] ; then
         nofml=1
@@ -795,7 +791,7 @@ function __fml_unpack() {
     fml_source_modfile_local="$1"
     fml_source_modfile_local="${fml_source_modfile_local%.lua}"
     shift
-    
+
     status=0
     if [[ $# -gt 0 ]] ; then
         fml_file="$1"
@@ -815,13 +811,16 @@ function __fml_unpack() {
         #     module unload fml-${fml_name}
         # fi
     fi
+
+    echo "echo 'Unpacking the module environment for fml-${fml_modname} (control-C to exit)' ; "
+    
     mt_file="${fml_modfile%.lua}.mt"
     
     # Create a unique temporary file
     mkdir -p ~/.config/lmod
     tmpfile=$( mktemp -p ~/.config/lmod fmlXXXXXXXXXX )
     /bin/cp "${mt_file}" "${tmpfile}"
-    
+
     __lmod_module_execute "restore '$(basename "${tmpfile}")' >& /dev/null"
     
     echo "/bin/rm ${tmpfile} ; "

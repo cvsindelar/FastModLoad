@@ -188,7 +188,6 @@ EOF
 
             echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
             echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
-            # echo "echo 'Unpacking the module environment for fml-'${fml_source_modfile}"
 
             ;;
         
