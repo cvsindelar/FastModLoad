@@ -192,11 +192,11 @@ EOF
 # echo '   / ###  # |  ' ;
 # echo "  *  ||ww--||  " ;
 # echo '     ^^    ^^  ' ;
+echo '' ;
 # EOF
 
 cat <<EOF	    
-# echo '' ;
-# echo "FML: Goodbye. To re-activate Fast Module Loading, please use 'ml fml'" ; 
+echo "FML: Goodbye. To re-activate Fast Module Loading, please use 'ml fml'" ; 
 EOF
             ;;
         

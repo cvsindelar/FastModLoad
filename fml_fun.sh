@@ -119,7 +119,7 @@ EOF
     # If "reset" is requested, reload fml after
     ######################
     if [[ " $@ " == *" reset "* ]] ; then
-        __fml_reset "${fml_source_modfile_local}" reset
+        __fml_reset --quiet "${fml_source_modfile_local}" reset
         return
     fi
 
