@@ -239,7 +239,7 @@ EOF
 		exit
 	    else
 		cat <<EOF
-echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"
+echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off' (or 'ml --force -fml')"
 EOF
             fi
             
