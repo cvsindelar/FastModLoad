@@ -23,8 +23,8 @@ if [[ "$0" == "${BASH_SOURCE}" ]]; then
 fi
 
 # Function to exit gracefully if fml.sh crashes:
-#  'bailout' emits bash commands to restore the original Lmod module
-#  and unload the 'fml' module, if possible
+#  'bailout' emits bash commands to restore the original Lmod module command
+#  and retry the user's requested 'module' command if needed
 
 # Declare this variable to avoid errors in the bailout function if it wasn't set yet
 # declare -a __fml_module_args=()
@@ -192,9 +192,12 @@ EOF
 # echo '   / ###  # |  ' ;
 # echo "  *  ||ww--||  " ;
 # echo '     ^^    ^^  ' ;
+# EOF
+
+cat <<EOF	    
 # echo '' ;
 # echo "FML: Goodbye. To re-activate Fast Module Loading, please use 'ml fml'" ; 
-# EOF
+EOF
             ;;
         
         init)
