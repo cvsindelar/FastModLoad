@@ -46,17 +46,9 @@ function bailout() {
         unset __fml_module_args_tmp
     fi    
 EOF
-}
-    # if [[ -n \$( module --redirect --terse list | awk '\$0 ~ /^fml\//' ) ]] ; then
-    #     echo "FastModLoad: Bailing out, goodbye" ; 
-    # fi ; 
-        # eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} init)"
-	# echo "    module unload fml ; "
 
-# Make the bailout function available to the user bash environment
-# echo 'function __fml_bailout() {'
-# bailout
-# echo ' }  ; '
+    # Here we should detect and warn the user if we wound up with a scrambled environment
+}
 
 # Trap for syntax errors in this script, but only when executing 'bash fml.sh' ;
 # we also allow this script to be sourced, for debugging purposes
