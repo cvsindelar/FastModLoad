@@ -104,6 +104,10 @@ if [[ $# -ge 1 ]] ; then
                 echo '                           the original Lmod environment' >&2
                 echo '    fml <module 1> [<module 2> ...]' >&2
                 echo '                           Make a Fast Module for the listed modules' >&2
+                echo '' >&2
+                echo '    fml --off              Turn off Fast Module Loading completely' >&2
+                echo '    fml --on               Turn it back on' >&2
+                echo '' >&2
                 echo '    fml --help             This help message' >&2
                 echo '' >&2
                 echo 'Administrator option:' >&2
