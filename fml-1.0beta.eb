@@ -14,41 +14,53 @@ sources = ['v%(version)s.tar.gz']
 start_dir = 'FastModLoad-%(version)s'
 
 # Modules for which we will pre-generate fast modules for global use:
-_fast_mods = [
+_global_fast_mods = [
     ('R','4.4.1'),
-#    ('R','4.4.2'),
     ('RELION','4.0.2'),
-#    ('RELION','5.0.0'),
+    ('RELION','5.0.0'),
 ]
 
-# Pre-format the builddependencies into a string bash can understand
-# Extract just the names from the (name, version) tuples in builddependencies
-_deps_list = " ".join(["%s/%s" % (d[0], d[1]) for d in _fast_mods])
+# Pre-format _global_fast_mods into a string bash can understand
+# Extract just the names from the (name, version) tuples in _global_fast_mods
+_global_fast_mods_list = " ".join(["%s/%s" % (d[0], d[1]) for d in _global_fast_mods])
 
 postinstallcmds = [
     "type -t module || echo 'MODULE FUNCTION NOT FOUND'", # Diagnostic
-    
+
+    ##############################3
     # Make sure the new file/folder group permissions are inherited
     #  so that fellow group members may also create global fast modules:
+    ##############################3
+    
     "mkdir %(installdir)s/fml_prebuilds",
     "chmod g+s %(installdir)s/fml_prebuilds",
     "printf '' > %(installdir)s/update_prebuilds.sh",
-    "printf '' > %(installdir)s/test.txt",
+    "printf '' > %(installdir)s/prebuild_log.out",
 
-    # "my_file_name='%(installdir)s/../../../modules/all/fml/%(version)s.lua'; " + \
+    ##############################3
+    # Now use 'fml' to build the list of global Fast Modules, above
+    # Note, global_mods only exists for the duration of the following single command string:
+    ##############################3    
+    "global_mods=( %s ); " % _global_fast_mods_list + \
 
-    # Note, build_deps only exists for the duration of the following single command string:
-    "build_deps=( %s ); " % _deps_list + \
-    "echo declare -f module >> %(installdir)s/update_prebuilds.sh ; " + \
-    "echo for mod in ${build_deps[@]} >> %(installdir)s/update_prebuilds.sh ; " + \
+    # Loop through the list
+    "echo for mod in ${global_mods[@]} >> %(installdir)s/update_prebuilds.sh ; " + \
     "echo do >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'echo $mod >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'module --redirect avail $mod &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'module purge' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'module -D --ignore_cache load $mod &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'bash %(installdir)s/fml.sh - fml --global &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " 
-#    "  echo 'fml --global &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'module --redirect list &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "echo '  echo $mod >> %(installdir)s/prebuild_log.out' >> %(installdir)s/update_prebuilds.sh ; " + \
+    
+    "echo '  module purge' >> %(installdir)s/update_prebuilds.sh ; " + \
+
+    # Get the full module name from the default labelled by '(D)'
+    "echo '  fullmod=$(module --redirect avail $mod 2>&1 | awk \"/\\(D\\)/ {print \\$(NF-1); exit}\")' >> %(installdir)s/update_prebuilds.sh ; "
+
+    # Manually finish loading the fml module, since EasyBuild doesn't do it:
+    "echo '  echo bash %(installdir)s/fml.sh - init &>> %(installdir)s/prebuild_log.out' >> %(installdir)s/update_prebuilds.sh ; " 
+    "echo '  eval \"$( bash %(installdir)s/fml.sh - init )\" &>> %(installdir)s/prebuild_log.out' >> %(installdir)s/update_prebuilds.sh ; " 
+
+    # Use fml to build the global Fast Module
+    "echo '  echo fml --global $fullmod &>> %(installdir)s/prebuild_log.out' >> %(installdir)s/update_prebuilds.sh ; " \
+    "echo '  fml --global $fullmod &>> %(installdir)s/prebuild_log.out' >> %(installdir)s/update_prebuilds.sh ; " \
+    
     "echo 'done' >> %(installdir)s/update_prebuilds.sh ; ",
 ]
 

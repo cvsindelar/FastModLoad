@@ -218,9 +218,9 @@ function fml () {
 }
 
 # Enable autocompletion for fml the same as 'ml':
-t=( \$(complete -p ml) )
-if [ "\$(type -t \${t[2]})" = 'function' ]; then
-    complete -F "\${t[2]}" fml
+t=( \$(complete -p ml) ) >& /dev/null
+if [[ -n "\${t[2]:-}" && "\$(type -t \${t[2]:-})" = 'function' ]] ; then
+    complete -F "\${t[2]}" fml >& /dev/null
 fi
 
 EOF
