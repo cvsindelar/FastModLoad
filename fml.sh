@@ -236,14 +236,10 @@ else
 
             if [[ ${fml_active} == "off" ]] ; then
                 echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
-                cat <<EOF
-echo "Fast Module Loading inactivated. To turn on Fast Module Loading, do 'fml --on'"
-EOF
+                echo "Fast Module Loading inactivated. To turn on Fast Module Loading, do 'fml --on'" >&2
 		exit
 	    else
-		cat <<EOF
-echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off' (or 'ml --force -fml')"
-EOF
+		echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off' (or 'ml --force -fml')" >&2
             fi
             
             if [[ -z $( declare -f module | grep fml ) ]] ; then
