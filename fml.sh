@@ -349,8 +349,7 @@ function module () {
             __fml_end=\$(date +%s)
 
             # Zero the runtime unless a module load was requested:
-            # if [[ "\$(echo \$@ | awk '\$1=="load" {loading=1} END {if(loading) print 1 ; else print 0}')" -eq 0 ]] ; then
-            if [[ " $* " == *" load "* ]] ; then
+            if [[ "\$(echo \$@ | awk '\$1=="load" {loading=1} END {if(loading) print 1 ; else print 0}')" -eq 0 ]] ; then
                 __fml_start=0
                 __fml_end=0
             fi

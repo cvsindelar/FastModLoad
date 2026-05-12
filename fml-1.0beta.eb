@@ -1,7 +1,7 @@
 easyblock = 'Tarball'
 
 name = 'fml'
-version = '1.0beta'
+version = '1.0beta2'
 
 homepage = 'https://github.com/cvsindelar/FastModLoad'
 description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
@@ -14,16 +14,16 @@ sources = ['v%(version)s.tar.gz']
 start_dir = 'FastModLoad-%(version)s'
 
 # Modules for which we will pre-generate fast modules for global use:
-builddependencies = [
+_fast_mods = [
     ('R','4.4.1'),
-    ('R','4.4.2'),
+#    ('R','4.4.2'),
     ('RELION','4.0.2'),
-    ('RELION','5.0.0'),
+#    ('RELION','5.0.0'),
 ]
 
 # Pre-format the builddependencies into a string bash can understand
 # Extract just the names from the (name, version) tuples in builddependencies
-_deps_list = " ".join(["%s/%s" % (d[0], d[1]) for d in builddependencies])
+_deps_list = " ".join(["%s/%s" % (d[0], d[1]) for d in _fast_mods])
 
 postinstallcmds = [
     "type -t module || echo 'MODULE FUNCTION NOT FOUND'", # Diagnostic
@@ -32,23 +32,35 @@ postinstallcmds = [
     #  so that fellow group members may also create global fast modules:
     "mkdir %(installdir)s/fml_prebuilds",
     "chmod g+s %(installdir)s/fml_prebuilds",
+    "printf '' > %(installdir)s/update_prebuilds.sh",
+    "printf '' > %(installdir)s/test.txt",
+
+    # "my_file_name='%(installdir)s/../../../modules/all/fml/%(version)s.lua'; " + \
 
     # Note, build_deps only exists for the duration of the following single command string:
     "build_deps=( %s ); " % _deps_list + \
-    "my_file_name='%(installdir)s/../../../modules/all/fml/%(version)s.lua'; " + \
-    "for mod in ${build_deps[@]}; do " + \
-    "  module reset ; " + \
-    "  bash %(installdir)s/fml.sh $my_file_name init; " + \
-    "  fml --global $mod; " + \
-    "done"
-]
-
+    "echo declare -f module >> %(installdir)s/update_prebuilds.sh ; " + \
+    "echo for mod in ${build_deps[@]} >> %(installdir)s/update_prebuilds.sh ; " + \
+    "echo do >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'echo $mod >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo module reset >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo module use %(installdir)s/../../../modules/all >> %(installdir)s/update_prebuilds.sh ; " 
+    "  echo module load fml/%(version)s  >> %(installdir)s/update_prebuilds.sh ; " 
+    "  echo 'module load $mod' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'fml --global >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'module --redirect list >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "echo done >> %(installdir)s/update_prebuilds.sh ; ",
 ]
 
 sanity_check_paths = {
     'files': ['fml.sh'],
     'dirs': ['.'],
 }
+
+# This sanity check is also functional - it builds our default fast modules:
+sanity_check_commands = [
+    "bash %(installdir)s/update_prebuilds.sh",
+]
 
 modluafooter = '''
 local script = pathJoin(root, "fml.sh")

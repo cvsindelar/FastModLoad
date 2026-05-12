@@ -733,6 +733,7 @@ function __fml_build() {
     local tmpfile2
     local tmpfile3
     local ordered_module_list
+    echo blarch __fml_build "$@" >&2
     
     fml_source_modfile_local="$1"
     shift
@@ -803,7 +804,12 @@ function __fml_build() {
     chmod -R ug+rw $(dirname "${mod_filename}")
     
     # Now replace the slow-loading environment with the fast module
-    __fml_reset --quiet "${fml_source_modfile_local}" purge
+    if [[ "${fml_source_modfile_local}" != '-' ]] ; then
+        __fml_reset --quiet "${fml_source_modfile_local}" purge
+    else
+        __lmod_module_execute purge
+    fi
+
     # module reset
 
     # Restore fml
