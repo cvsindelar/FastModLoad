@@ -43,13 +43,13 @@ postinstallcmds = [
     "echo for mod in ${build_deps[@]} >> %(installdir)s/update_prebuilds.sh ; " + \
     "echo do >> %(installdir)s/update_prebuilds.sh ; " + \
     "  echo 'echo $mod >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo module reset >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo module use %(installdir)s/../../../modules/all >> %(installdir)s/update_prebuilds.sh ; " 
-    "  echo module load fml/%(version)s  >> %(installdir)s/update_prebuilds.sh ; " 
-    "  echo 'module load $mod' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'fml --global >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "  echo 'module --redirect list >> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
-    "echo done >> %(installdir)s/update_prebuilds.sh ; ",
+    "  echo 'module --redirect avail $mod &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'module purge' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'module -D --ignore_cache load $mod &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'bash %(installdir)s/fml.sh - fml --global &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " 
+#    "  echo 'fml --global &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "  echo 'module --redirect list &>> %(installdir)s/test.txt' >> %(installdir)s/update_prebuilds.sh ; " + \
+    "echo 'done' >> %(installdir)s/update_prebuilds.sh ; ",
 ]
 
 sanity_check_paths = {
