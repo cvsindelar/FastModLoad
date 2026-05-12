@@ -100,7 +100,7 @@ if [[ $# -ge 1 ]] ; then
                 shift
                 echo 'Usage:' >&2
                 echo '    fml                    Make a Fast Module for the current module environment and load it' >&2
-                echo '                           Alternatively, unpack the currently loaded Fast Module to restore' >&2
+                echo '                           Alternatively, disable the currently loaded Fast Module and restore' >&2
                 echo '                           the original Lmod environment' >&2
                 echo '    fml <module 1> [<module 2> ...]' >&2
                 echo '                           Make a Fast Module for the listed modules' >&2
