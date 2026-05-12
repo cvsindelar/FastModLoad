@@ -173,14 +173,24 @@ EOF
         exit)
             source "${fml_base_dir}"/fml_fun.sh
             __fml_unpack --nofml "${fml_source_modfile}"
-            if [[ $? -ne 0 ]]; then
-                echo 'echo "Warning: unable to restore the full lmod environment"'
-                echo 'return 1'
-            fi
+	    echo 'if [[ $? -ne 0 ]] ; then '
+            echo '    echo "Warning: unable to restore the full lmod environment" ; '
+            echo '    return 1 ; '
+	    echo 'fi ; '
 
             echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
             echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
 
+# cat <<'EOF'
+# echo '           (__)' ;
+# echo '           (@@)' ;
+# echo '    /##--##-\#)' ;
+# echo '   / ###  # |  ' ;
+# echo "  *  ||ww--||  " ;
+# echo '     ^^    ^^  ' ;
+# echo '' ;
+# echo "FML: Goodbye. To re-activate Fast Module Loading, please use 'ml fml'" ; 
+# EOF
             ;;
         
         init)
@@ -218,10 +228,11 @@ else
 }' ~/.config/fml/config )
 
             if [[ ${fml_active} == "off" ]] ; then
-                # echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
+                echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
                 cat <<EOF
 echo "Fast Module Loading inactivated. To turn on Fast Module Loading, do 'fml --on'"
 EOF
+		exit
 	    else
 		cat <<EOF
 echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off'"

@@ -441,6 +441,15 @@ function __fml() {
 		if [[ $status -eq 0 ]] ; then
 		    echo "mkdir -p ${fml_prebuilds_dir}/${old_fml_name}.d ; "
 		    echo "echo ''"
+# cat <<'EOF'
+# echo '           (__)' ;
+# echo '           (@@)' ;
+# echo '    /##--##-\#)' ;
+# echo '   / ###  # |  ' ;
+# echo "  *  ||ww--||  " ;
+# echo '     ^^    ^^  ' ;
+# echo '' ;
+# EOF
 		    echo "echo Fast Module disabled: fml-${old_fml_name}"
 		    echo "echo Type \'fml\' again to re-enable"
 		fi
@@ -603,8 +612,12 @@ function __fml_reset() {
     # echo module --lmod reset
     
     # Perform the reset or purge command:
-    __lmod_module_execute "${func} 2> /dev/null"
-
+    if [[ ${quiet} -eq 1 ]] ; then
+	__lmod_module_execute "${func} > /dev/null 2>&1"
+    else
+	__lmod_module_execute "${func} 2> /dev/null"
+    fi
+    
     # After fml is unloaded, we need to use the original 'module' commands to reload fml:
     echo 'if [[ ":\$MODULEPATH:" != *":'${fml_path}'":* ]] ; then '
     __lmod_module_execute "use ${fml_path}"
@@ -798,10 +811,25 @@ function __fml_build() {
     __lmod_module_execute "load $(basename ${mod_filename%.lua})"
     
     echo 'if [[ $? -ne 0 ]] ; then '
-        echo echo "Fast Module failed to load: fml-${mod_name}"
-	echo echo "Falling back to Lmod"
-	__lmod_module_execute "$@"
-    echo 'fi ; '
+    echo "    echo Fast Module failed to load: fml-${mod_name} ; "
+    echo "    echo Falling back to Lmod ; "
+    __lmod_module_execute "$@"
+    
+    echo 'else '
+    echo '  : '
+# cat<<"EOF"
+# echo '' ;
+# echo '            (~~) ' ;
+# echo '           <(@@) ' ;
+# echo '  *---##--##-\#) ' ;
+# echo '      |##  # |_  ' ;
+# echo '   ;_//ww---- \\ ' ;
+# echo '               ^^' ;
+# echo '' ;
+# EOF
+
+echo 'fi ; '
+
     # cat "${mod_filename%.lua}.out"
 }
 
