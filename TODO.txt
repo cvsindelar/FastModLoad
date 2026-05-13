@@ -5,7 +5,8 @@
 
 # Priority #2
 
-# 0. Edge case: bouchet Python global module does not exist on AMD nodes, and leads to failure:
+# 1. In __fml and __fml_module, call __fml_build directly rather than using fml.sh ... build?
+# 2. Edge case: bouchet Python global module does not exist on AMD nodes, and leads to failure:
 ml fml
 ml Python
 alloc --mem=8G -c 1 -p day_amd
@@ -29,28 +30,28 @@ Currently Loaded Modules:
   7) ncurses/6.5-GCCcore-13.3.0              14) Python/3.12.3-GCCcore-13.3.0
 
 
-# 1. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
-# 2. Final testing for robustness (make unit tests)
-# 3. Enlarge the list of default global fast modules
-# 4. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
-# 5. --name option for 'fml'
-# 6. Warn when including conda/miniconda or EasyBuild in a fast module
-# 7. fml options:
-#   --on : write to .config/fml/fml.config : active on
-#   --off : write to .config/fml/fml.config : active off
-#   --auto : write to .config/fml/fml.config : active auto
-#   --fail : write to .config/fml/fml.config : active fail
-#   --disable/deactivate : fast module dir renamed to xxx.d ;
-#                          additional __fml logic : new fml requests check for existence & validate
+# 3. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
+# 4. Final testing for robustness (make unit tests)
+# 5. Enlarge the list of default global fast modules
+# 6. Keep full track of user requested loads, and only allow current naming scheme when this is possible
+#    -> name prompt or error out if, i.e., user loaded fml when other modules were present.
+# 7. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
+# 8. --name option for 'fml' & allow 4 or more modules per fast module
+# 9. Warn when including conda/miniconda or EasyBuild in a fast module
+# 10. fml options:
+#  --on : write to .config/fml/fml.config : active on
+#  --off : write to .config/fml/fml.config : active off
+#  --auto : write to .config/fml/fml.config : active auto
+#  --fail : write to .config/fml/fml.config : active fail
 #  --thresh : set to <val>
 #  --update/force : overwrite existing fast module even if up to date
 #  --clear : permanently delete fast module file (recognize --global)
 #  --nuke : recognize --global
-# 8. Rename functions in fml_fun.sh to more be more logical
+# 11. Rename functions in fml_fun.sh to more be more logical
 
 # Priority #3
 
-# 9. Implement tcsh/csh functionality ; 
+# 1. Implement tcsh/csh functionality ; 
 #     for embedding originals in tcsh/csh aliases, the following should work:
 #     set my_backup = "`alias module`"
 #     Redefine it later using the variable
@@ -61,7 +62,7 @@ Currently Loaded Modules:
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
 
-# 9. Auto-deleting local fast module builds when they are identical to the global builds
+# 2. Auto-deleting local fast module builds when they are identical to the global builds
 #    (works for all users, minimizes file count burden on the filesystem)
 
 
