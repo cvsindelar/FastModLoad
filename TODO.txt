@@ -34,7 +34,7 @@ Currently Loaded Modules:
 # 4. Final testing for robustness (make unit tests)
 # 5. Enlarge the list of default global fast modules
 # 6. Keep full track of user requested loads, and only allow current naming scheme when this is possible
-#    -> name prompt or error out if, i.e., user loaded fml when other modules were present.
+#    -> name prompt or error out if, i.e., user loaded fml when other modules were present (require module reset)
 # 7. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
 # 8. --name option for 'fml' & allow 4 or more modules per fast module
 # 9. Warn when including conda/miniconda or EasyBuild in a fast module
