@@ -560,6 +560,11 @@ eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${request
 echo "Complete. To rapidly load this environment in the future, do:"
 echo "    module reset ; module load ${load_arguments[@]}"
 EOF
+	# Ensure the fast module will be active going forwards, by
+	#  removing any xxxx.d in the user's .config/fml/fml_prebuilds folder
+	echo "if [[ -d ${fml_prebuilds_dir}/${requested_fml_name}.d ]] ; then "
+	echo "   rmdir ${fml_prebuilds_dir}/${requested_fml_name}.d ; "
+	echo 'fi'
     fi
 }
 
@@ -733,7 +738,6 @@ function __fml_build() {
     local tmpfile2
     local tmpfile3
     local ordered_module_list
-    echo blarch __fml_build "$@" >&2
     
     fml_source_modfile_local="$1"
     shift
@@ -809,8 +813,6 @@ function __fml_build() {
     else
         __lmod_module_execute purge
     fi
-
-    # module reset
 
     # Restore fml
     __lmod_module_execute "use $(dirname ${mod_filename})"
