@@ -48,6 +48,8 @@ Currently Loaded Modules:
 #  --clear : permanently delete fast module file (recognize --global)
 #  --nuke : recognize --global
 # 11. Rename functions in fml_fun.sh to more be more logical
+# 12. interrupting ml --force -fml with control-c (i.e. during fast module unpacking) results in
+#      a fast module loaded but with fml unloaded, and the hijacked module function still present
 
 # Priority #3
 
