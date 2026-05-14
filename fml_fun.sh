@@ -295,7 +295,7 @@ else
     # Load the fast module if it exists.
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
 
-	# echo "Fast Module Load: fml-${requested_fml_name}" >&2
+	echo "Fast Module Load: fml-${requested_fml_name}" >&2
 
         __lmod_module_execute "use $(dirname ${fml_filename})"
 	
