@@ -295,7 +295,7 @@ else
     # Load the fast module if it exists.
     if [[ -f "${fml_filename}" && "${update_needed}" -eq '0' ]] ; then
 
-	echo "Fast Module Load: fml-${requested_fml_name}" >&2
+	# echo "Fast Module Load: fml-${requested_fml_name}" >&2
 
         __lmod_module_execute "use $(dirname ${fml_filename})"
 	
@@ -340,9 +340,10 @@ else
         if [[ "${update_needed}" -eq '1' ]] ; then
 	    echo '__fml_start=0 ; '
 	    echo '__fml_end=0 ; '
-            cat <<EOF
-eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
-EOF
+	    __fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
+#             cat <<EOF
+# eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build 
+# EOF
 	fi
     fi
 }
@@ -440,7 +441,6 @@ function __fml() {
                 __fml_unpack "${fml_source_modfile_local}" || status=$?
 		if [[ $status -eq 0 ]] ; then
 		    echo "mkdir -p ${fml_prebuilds_dir}/${old_fml_name}.d ; "
-		    echo "echo ''"
 # cat <<'EOF'
 # echo '           (__)' ;
 # echo '           (@@)' ;
@@ -527,9 +527,14 @@ function __fml() {
 	echo 'else '
         echo "    echo Fast Module failed to load: fml-${requested_fml_name}"
         echo "    echo Falling back to Lmod:"
-        echo "    echo module $@"
 	
-        __lmod_module_execute "$@"
+        if [[ ${autofml} -eq 1 ]] ; then
+        echo "    echo module load ${load_arguments[@]}"
+            __lmod_module_execute load "${load_arguments[@]}"
+	else
+            echo "    echo module $@"
+            __lmod_module_execute "$@"
+	fi
 	
 	echo 'fi ; '
     else
@@ -554,8 +559,10 @@ function __fml() {
 	fi
 
 	# Build the module
+	__fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
+
         cat <<EOF
-eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
+# eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
 
 echo "Complete. To rapidly load this environment in the future, do:"
 echo "    module reset ; module load ${load_arguments[@]}"
@@ -885,7 +892,7 @@ function __fml_unpack() {
         # fi
     fi
 
-    echo "echo 'Unpacking the module environment for fml-${fml_modname} (control-C to exit)' ; "
+    # echo "echo 'Unpacking the module environment for fml-${fml_modname} (control-C to exit)' ; "
     
     mt_file="${fml_modfile%.lua}.mt"
     

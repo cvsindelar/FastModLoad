@@ -2,11 +2,7 @@
 
 # Priority #1
 # 1. Finalize Github README
-
-# Priority #2
-
-# 1. In __fml and __fml_module, call __fml_build directly rather than using fml.sh ... build?
-# 2. Edge case: bouchet Python global module does not exist on AMD nodes, and leads to failure:
+# 2. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
 ml fml
 ml Python
 alloc --mem=8G -c 1 -p day_amd
@@ -29,6 +25,8 @@ Currently Loaded Modules:
   6) bzip2/1.0.8-GCCcore-13.3.0              13) OpenSSL/3
   7) ncurses/6.5-GCCcore-13.3.0              14) Python/3.12.3-GCCcore-13.3.0
 
+
+# Priority #2
 
 # 3. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
 # 4. Final testing for robustness (make unit tests)
