@@ -334,13 +334,16 @@ function module () {
                 fi
                 unset __fml_module_args
 
-		# If there was a failure, the below commands revert 'module' to the original 
-		#  lmod function while unpacking/preserving the existing module environment ; 
-		#  the requested module command is then retried. No more fast modules for the user
-		#  until 'module reset' or 'module purge' is done!
+		#  If there was a failure, the requested module command is retried with regular lmod. 
+		# Commented out: the below 'eval' command would revert 'module' 
+		#  to the original lmod function while unpacking/preserving the existing module environment ; 
+		#  this would mean no more fast modules for the user until 'module reset' or 'module purge' is done!
+
                 if [[ "\${__fml_status}" -ne 0 ]] ; then
                     echo "FastModLoad failure: falling back to Lmod.. "
-                    eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} exit )"
+
+                    # eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} exit )"
+
                     echo module "\$@"
                     module --lmod "\$@"
                 fi

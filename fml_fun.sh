@@ -207,7 +207,7 @@ else
         #  to get ready to load the new ones
 	status=0
         fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
-        if [[ "${#fml_info[@]}" -gt 0 && "$status" -eq '0' ]] ; then
+        if [[ "$status" -eq '0' && "${#fml_info[@]}" -gt 0 ]] ; then
             # For message printing, get the original list of user-requested modules
             #  -> note the last 2 lines in the awk script below (END clause) handle the edge
             #     case where for some reason the last listed module is not a user-requested one
@@ -264,14 +264,14 @@ else
     status=0
     fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
 
-    if [[ "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 || "$status" -ne '0' ]] ; then
+    if [[ "$status" -ne 0 || "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 ]] ; then
         # Revert to lmod functions
         __lmod_module_execute "$@"
         return
     fi
         
-    fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )
-    if [[ ${#fml_filename_info[@]} -eq 3 ]] ; then
+    fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) ) || status=$?
+    if [[ "$status" -ne 0 || ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
         requested_fml_name="${fml_filename_info[1]}"
         update_needed="${fml_filename_info[2]}"
@@ -489,8 +489,9 @@ function __fml() {
         return
     fi
 	
-    fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )
-    if [[ ${#fml_filename_info[@]} -eq 3 ]] ; then
+    status=0
+    fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) )  || status=$?
+    if [[ "$status" -ne 0 || ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
         requested_fml_name="${fml_filename_info[1]}"
         update_needed="${fml_filename_info[2]}"
@@ -880,7 +881,7 @@ function __fml_unpack() {
         fml_info=( $(__fml_get_loaded_fml) ) || status=$?
 
         # If no fast module present, there is nothing to do
-        if [[ ${#fml_info[@]} -lt 3 || $status -ne 0 ]] ; then
+        if [[ $status -ne 0 || ${#fml_info[@]} -lt 3 ]] ; then
             return
         fi
                 
@@ -956,6 +957,7 @@ function __fml_get_loaded_fml() {
     #    - multiple fast fml-xxx modules
     local loaded_fml_name
     
+    status=0
     loaded_fml_name=( $( (module --mt ; echo "${process_collection_lua_script}") \
                                |& lua - | sort -n -k 1 | awk '
                                   {
@@ -986,8 +988,8 @@ function __fml_get_loaded_fml() {
                                       } else
                                         print(fml, fmldir, fmlfile);
                                     }
-                                  }') )
-    if [[ "${#loaded_fml_name[@]}" -lt 1 ]] ; then
+                                  }') ) || status=$?
+    if [[ "$status" -ne 0 || "${#loaded_fml_name[@]}" -lt 1 ]] ; then
         loaded_fml_name=( '' )
     fi
     if [[ "${#loaded_fml_name[@]}" -lt 2 ]] ; then
@@ -1048,7 +1050,8 @@ function __fml_get_load_info() {
             #   using module --location show, lmod will report the loaded R version (R/...bare)
             #   rather than the YCRC R ordinary version that was requested.
             #  Thus, __fml_get_module_info will return the wrong R info in this case!
-            module_info=( $(__fml_get_module_info ${arg}/default) )
+	    status=0
+            module_info=( $(__fml_get_module_info ${arg}/default) ) || status=$?
         else
             module_info=()
         fi
@@ -1057,7 +1060,7 @@ function __fml_get_load_info() {
         #  results in failure(there's no easy way to tell
         #  other than failure). So, we now redo __fml_get_module_info the normal way
 	status=0
-        if [[ "${#module_info[@]}" -eq 0 ]] ; then
+        if [[ "$status" -ne 0 || "${#module_info[@]}" -eq 0 ]] ; then
             module_info=( $(__fml_get_module_info ${arg}) ) || status=$?
         fi          
         if [[ ${#module_info[@]} -lt 2 || ${status} -ne 0 ]] ; then
