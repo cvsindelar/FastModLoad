@@ -27,7 +27,8 @@ Currently Loaded Modules:
 
 
 # Priority #2
-
+# 1. Address double-calling of lmod module when the user requested module arguments produce an error. Best solution is #2, below
+# 2. Replace 'module --lmod' calls in __fml_module/__fml with bash exit signals (i.e. 64) to the calling function
 # 3. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
 # 4. Final testing for robustness (make unit tests)
 # 5. Enlarge the list of default global fast modules

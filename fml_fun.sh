@@ -109,6 +109,8 @@ echo "Type 'module --lmod list' to peek at the current (true) Lmod environment"
 echo ''
 EOF
             else
+		# New bash signaling approach:
+		# return 64
                 module list
             fi
             return
@@ -140,6 +142,8 @@ else
     
     if [[ -z ${first_load_arg} || "${fml_active}" == "off" ]] ; then
         __lmod_module_execute "$@"
+	# New bash signaling approach:
+	# return 64
         return
     fi
 
@@ -166,6 +170,8 @@ else
     # Check if we should just pass through to the Lmod module function (if not building a fast module)
     if [[ -z "${load_arguments[@]}" ]] ; then
         # If no load requested, pass the command through to Lmod
+	# New bash signaling approach:
+	# return 64
         __lmod_module_execute "$@"
         return
     fi
@@ -179,6 +185,8 @@ else
     if [[ -z $( module --terse list |& grep '^fml[-]' ) \
           && -z $( ls ${fml_global_prebuilds_dir}/${first_mod_spec}_* \
                       ${fml_prebuilds_dir}/${first_mod_spec}_* 2> /dev/null ) ]] ; then
+	# New bash signaling approach:
+	# return 64
         __lmod_module_execute "$@"
         return
     fi
@@ -189,6 +197,8 @@ else
     if [[ "${status}" -ne 0 ]] ; then
         echo 'ERROR: Corrupted fml environment :' >&2
         module list
+	# New bash signaling approach:
+	# return 65
         return
     fi
     old_fml_name="${old_fml_info[0]:-}"
@@ -226,11 +236,16 @@ else
             __fml_unpack "${fml_source_modfile_local}" || status=$?
             if [[ $? -ne 0 ]] ; then
                 echo 'echo "Warning: unable to restore the full lmod environment"'
+		# New bash signaling approach?
+                # echo "Warning: unable to restore the full lmod environment" >&2
+		# ???return 65???
                 echo 'return 1'
             fi
 	else
 	    # fall back to the original Lmod module code
             __lmod_module_execute "$@"
+	    # New bash signaling approach:
+	    # return 64
 	    return
         fi
     fi
@@ -266,6 +281,8 @@ else
 
     if [[ "$status" -ne 0 || "${fml_skip}" -ne 0 || "${#fml_info[@]}" -eq 0 ]] ; then
         # Revert to lmod functions
+	# New bash signaling approach:
+	# return 64
         __lmod_module_execute "$@"
         return
     fi
@@ -284,6 +301,8 @@ else
     # if xxxx.d exists, the fast module is disabled and we skip loading it
     if [[ -d ${fml_prebuilds_dir}/${requested_fml_name}.d ]] ; then
         # Revert to lmod functions
+	# New bash signaling approach:
+	# return 64
         __lmod_module_execute "$@"
         return
     fi
@@ -404,6 +423,7 @@ function __fml() {
     if [[ "${status}" -ne 0 ]] ; then
         echo 'ERROR: Corrupted fml environment :' >&2
         module list
+	echo "Please do 'module reset' to recover" >&2
         return
     fi
     old_fml_name="${old_fml_info[0]:-}"

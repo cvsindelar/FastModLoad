@@ -204,9 +204,6 @@ EOF
             # Define the master fml function
 cat <<EOF           
 function fml () {
-    local __fml_status
-    unset __fml_status
-
     if [[ \$# -ge 1 && "\$1" == "--fmldebug" ]] ; then
         shift
         echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} fml \$@)"
@@ -332,6 +329,9 @@ function module () {
                 if [[ \$? -ne 0 ]] ; then
                     __fml_status=1
                 fi
+		# New bash signaling approach:
+		# __fml_status=\$?
+
                 unset __fml_module_args
 
 		#  If there was a failure, the requested module command is retried with regular lmod. 
@@ -339,6 +339,10 @@ function module () {
 		#  to the original lmod function while unpacking/preserving the existing module environment ; 
 		#  this would mean no more fast modules for the user until 'module reset' or 'module purge' is done!
 
+		# New bash signaling approach:
+                # if [[ "\${__fml_status}" -eq 64 ]] ; then
+                #     module --lmod "\$@"
+                # elif
                 if [[ "\${__fml_status}" -ne 0 ]] ; then
                     echo "FastModLoad failure: falling back to Lmod.. "
 
