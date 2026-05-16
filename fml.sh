@@ -309,7 +309,7 @@ function module () {
 
         terselist=\$(module --lmod --terse list 2>&1 )
 
-        # Execute fml.sh using the above test
+        # Execute fml.sh subject to the above test
         if [[ " \$@ " == *" reset "* \
               || \$( echo "\${terselist}" | grep '^fml[-]' ) \
               || ( -n \${first_load_arg} \
@@ -334,22 +334,22 @@ function module () {
 
                 unset __fml_module_args
 
-		#  If there was a failure, the requested module command is retried with regular lmod. 
-		# Commented out: the below 'eval' command would revert 'module' 
-		#  to the original lmod function while unpacking/preserving the existing module environment ; 
-		#  this would mean no more fast modules for the user until 'module reset' or 'module purge' is done!
-
 		# New bash signaling approach:
                 # if [[ "\${__fml_status}" -eq 64 ]] ; then
                 #     module --lmod "\$@"
+		#     __fml_status=\$?
                 # elif
                 if [[ "\${__fml_status}" -ne 0 ]] ; then
                     echo "FastModLoad failure: falling back to Lmod.. "
 
-                    # eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} exit )"
-
                     echo module "\$@"
                     module --lmod "\$@"
+
+                    eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} fml --off )"
+
+		    # Disable Fast Module Loading:
+                    echo "As a precaution, Fast Module Loading has been turned off."
+                    echo "Fast Module Loading can be restored by 'fml --on'"
                 fi
             fi
         else
@@ -357,6 +357,7 @@ function module () {
 
             __fml_start=\$(date +%s)
             module --lmod "\$@"
+	    __fml_status=\$?
             __fml_end=\$(date +%s)
 
             # Zero the runtime unless a module load was requested:
@@ -372,6 +373,8 @@ function module () {
             echo "Slow load time detected ( \${runtime} sec ) ; "
             echo "  - type 'fml' <enter> to speed up loading of this module" >&2
         fi
+
+        return \$__fml_status
     fi
 }
 EOF
