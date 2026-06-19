@@ -106,6 +106,7 @@ if [[ $# -ge 1 ]] ; then
                 echo '                           Make a Fast Module for the listed modules' >&2
                 echo '' >&2
                 echo '    fml --off              Turn off Fast Module Loading completely' >&2
+                echo "                             (use 'ml --force -fml' to fully disable for this session)"
                 echo '    fml --on               Turn it back on' >&2
                 echo '' >&2
                 echo '    fml --help             This help message' >&2

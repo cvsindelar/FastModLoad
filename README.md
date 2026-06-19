@@ -4,7 +4,7 @@ FastModLoad is a 'helper' module that coordinates with Lmod to greatly accelerat
 
 ## Installation
 
-For EasyBuild users, an easyconfig 'eb' file is provided. If you are not using EasyBuild (untested currently), edit the 'fml/1.0.lua' file to taste, and place in the desired location in your module tree; be sure that your edited luafile correctly specifies the location of 'fml.sh'.
+For EasyBuild users, an easyconfig 'eb' file is provided. If you are not using EasyBuild, edit the 'fml/1.0.lua' file to taste, and place in the desired location in your module tree; be sure that your edited luafile correctly specifies the location of 'fml.sh'.
 
 # Usage
 

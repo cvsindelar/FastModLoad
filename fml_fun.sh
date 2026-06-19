@@ -70,12 +70,17 @@ function __fml_module() {
     ######################
     fmlglobal=''
     fmldebug=''
-    while [[ "${1:-}" == '--fmldebug' ]] ; do
+    while [[ $# -gt 0 ]]; do
         case "$1" in
             --fmldebug)
                 shift
                 ;;
+            *)
+                # Stop the loop at the first non-flag argument
+                break
+                ;;
         esac
+        echo blarchifer >&2
     done
 
     ######################
@@ -139,7 +144,7 @@ if(active == "on")
 else 
  print("off")
 }' ~/.config/fml/config )
-    
+
     if [[ -z ${first_load_arg} || "${fml_active}" == "off" ]] ; then
         __lmod_module_execute "$@"
 	# New bash signaling approach:
@@ -276,6 +281,12 @@ else
         fi
     fi
 
+    # echo echo __fml_get_load_info "${load_arguments[@]}"
+    # echo 'echo blorch $MODULEPATH'
+    # echo 'echo "##############################"'
+    # echo $(__fml_get_load_info "${load_arguments[@]}")
+    # echo 'echo "##############################"'
+    
     status=0
     fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
 
@@ -286,7 +297,7 @@ else
         __lmod_module_execute "$@"
         return
     fi
-        
+
     fml_filename_info=( $( __get_fml_filename ${fmlglobal} ${fml_info[@]} ) ) || status=$?
     if [[ "$status" -ne 0 || ${#fml_filename_info[@]} -eq 3 ]] ; then
         fml_filename="${fml_filename_info[0]}"
@@ -399,7 +410,8 @@ function __fml() {
     ######################
     fmlglobal=''
     fmldebug=''
-    while [[ "${1:-}" == '--global' || "${1:-}" == '--fmldebug' ]] ; do
+
+    while [[ $# -gt 0 ]]; do
         case "$1" in
             --global)
                 fmlglobal='--global'
@@ -408,7 +420,12 @@ function __fml() {
             --fmldebug)
                 shift
                 ;;
+            *)
+                # Stop the loop at the first non-flag argument
+                break
+                ;;
         esac
+        echo blarch >&2
     done
 
     ######################
@@ -629,12 +646,13 @@ function __fml_reset() {
     fi
     
     fml_source_modfile_local="$1"
+    shift
+    
     fml_source_modfile_local="${fml_source_modfile_local%.lua}"
 
     fml_path=$(dirname $(dirname "${fml_source_modfile_local}"))
     fml_name=$(basename $(dirname "${fml_source_modfile_local}"))
     fml_version=$(basename "${fml_source_modfile_local}")
-    shift
     
     if [[ $# -lt 1 ]] ; then
         func=reset
@@ -890,8 +908,9 @@ function __fml_unpack() {
     fi
     
     fml_source_modfile_local="$1"
-    fml_source_modfile_local="${fml_source_modfile_local%.lua}"
     shift
+
+    fml_source_modfile_local="${fml_source_modfile_local%.lua}"
 
     status=0
     if [[ $# -gt 0 ]] ; then
@@ -1058,10 +1077,11 @@ function __fml_get_load_info() {
 	echo 'Fast modules not allowed for 4 or more modules' >&2
 	return 1
     fi
-    
+
     load_arguments=
     requested_modfiles=()
     for arg in "$@" ; do
+        module_info=()
         if [[ "${slow}" -eq 1 ]] ; then
             # Extra careful option always gets the default version if the version is not specified.
             #  The only known reason to do this is the YCRC R module, which wreaks havoc by
