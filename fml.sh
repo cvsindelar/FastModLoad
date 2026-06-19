@@ -330,7 +330,7 @@ function module () {
                     __fml_status=1
                 fi
 		# New bash signaling approach:
-		# __fml_status=\$?
+                # eval "status=0 ; \$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ || status=\$? ; echo '__fml_status='\$status )"
 
                 unset __fml_module_args
 

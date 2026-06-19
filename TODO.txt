@@ -1,6 +1,7 @@
 # Remaining features to implement:
 
 # Priority #1
+# 0. update failure: missing .list file in the R_4.4.2 GLOBAL fast module triggers a rebuild that fails.
 # 1. Finalize Github README
 # 2. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
 ml fml
