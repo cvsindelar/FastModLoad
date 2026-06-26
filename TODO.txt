@@ -1,9 +1,20 @@
 # Remaining features to implement:
 
 # Priority #1
-# 0. update failure: missing .list file in the R_4.4.2 GLOBAL fast module triggers a rebuild that fails.
-# 1. Finalize Github README
-# 2. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
+# 1. for an out of date global module, rebuild it *locally*
+# 2. Clean-up:
+#     - 'module load': When a good fast module is detected and loaded, detect and delete any OTHER
+#        local fast module versions whose contents are identical
+#       (if we are loading a local module, duplicates will be higher-numbered)
+#     - fml: similarly clean up, if --global then also clean up global duplicates as well
+# 
+#    (works for all users, minimizes file count burden on the filesystem)
+# 3. fml -n (--name) option: short name for an environment, dir name will be "name.fml_alias"
+#     - fml aliases can only be loaded by fml, not by module load
+#     - this mechanism allows hierarchical module trees to be (wantonly) loaded
+# 4. update failure: missing .list file in the R_4.4.2 GLOBAL fast module triggers a rebuild that fails.
+# 5. Finalize Github README
+# 6. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
 ml fml
 ml Python
 alloc --mem=8G -c 1 -p day_amd
@@ -63,10 +74,6 @@ Currently Loaded Modules:
 #     The bash equivalent for eval "${__fml_orig_module_code}" 
 #     https://share.google/aimode/tdCNo8LcF5JhUzRq1
 #     alias module 'echo "ORIG"; alias myfunc "echo FML"; eval myfunc'
-
-# 2. Auto-deleting local fast module builds when they are identical to the global builds
-#    (works for all users, minimizes file count burden on the filesystem)
-
 
 # CONDA FAILURE MODE:
 # (solution is to prevent, or at least warn about, including conda/miniconda/etc in fast modules):
