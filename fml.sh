@@ -99,11 +99,7 @@ if [[ $# -ge 1 ]] ; then
             if [[ $# -ge 1  && ( "$1" == "--help" || "$1" == "-h" ) ]] ; then
                 shift
                 echo 'Usage:' >&2
-                echo '    fml                    Make a Fast Module for the current module environment and load it' >&2
-                echo '                           Alternatively, disable the currently loaded Fast Module and restore' >&2
-                echo '                           the original Lmod environment' >&2
-                echo '    fml <module 1> [<module 2> ...]' >&2
-                echo '                           Make a Fast Module for the listed modules' >&2
+                echo '    fml                    Toggle Fast Module Loading for the current module environment' >&2
                 echo '' >&2
                 echo '    fml --off              Turn off Fast Module Loading completely' >&2
                 echo "                             (use 'ml --force -fml' to fully disable for this session)"
@@ -115,6 +111,10 @@ if [[ $# -ge 1 ]] ; then
                 echo "    fml --global [...]     Make the new fast module available to all users" >&2
                 echo '                            (requires write permission to the fml app folder:' >&2
                 echo "                             ${fml_base_dir} )" >&2
+                echo '' >&2
+                echo 'Alternate syntax:' >&2
+                echo '    fml <module 1> [<module 2> ...]' >&2
+                echo '                           Make a Fast Module for the listed modules' >&2
                 echo '' >&2
                 exit
             fi

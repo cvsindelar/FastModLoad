@@ -80,7 +80,6 @@ function __fml_module() {
                 break
                 ;;
         esac
-        echo blarchifer >&2
     done
 
     ######################
@@ -425,7 +424,6 @@ function __fml() {
                 break
                 ;;
         esac
-        echo blarch >&2
     done
 
     ######################
@@ -765,7 +763,7 @@ function __get_fml_filename() {
             break
         fi
     done
-    
+
     echo "${fml_filename}"
     echo "${requested_fml_name}"
     echo "${update_needed}"
@@ -795,6 +793,8 @@ function __fml_build() {
     mod_name="$1"
     mod_filename="$2"
 
+    mkdir -p $(dirname "${mod_filename}")
+
     # Save the module listing
     module --terse --redirect list > ${mod_filename%.lua}.list
 
@@ -806,8 +806,6 @@ function __fml_build() {
         LMOD_PAGER=none ml list 2> ${mod_filename%.lua}.fancy_list
     fi
     /bin/rm ${mod_filename%.lua}.list_tmp >& /dev/null
-    
-    mkdir -p $(dirname "${mod_filename}")
     
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
     mkdir -p ~/.config/lmod
