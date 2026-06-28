@@ -7,7 +7,8 @@
 ############################################
 
 1. modulepath is not updated when a fast module is unloaded
-2. Python fast module continually rebuilds with every load
+2. Python fast module continually rebuilds with every load on bouchet: suspect this is because
+  the default fml module is set to ~/programs/FastModLoad?
 3. ml R (fast module); ml -R leaves behind 26 modules, as opposed to one module (Java) when fml is not used
 
 ############################################
