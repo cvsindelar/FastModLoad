@@ -98,24 +98,26 @@ if [[ $# -ge 1 ]] ; then
             shift
             if [[ $# -ge 1  && ( "$1" == "--help" || "$1" == "-h" ) ]] ; then
                 shift
-                echo 'Usage:' >&2
-                echo '    fml                    Toggle Fast Module Loading for the current module environment' >&2
-                echo '' >&2
-                echo '    fml --off              Turn off Fast Module Loading completely' >&2
-                echo "                             (use 'ml --force -fml' to fully disable for this session)"
-                echo '    fml --on               Turn it back on' >&2
-                echo '' >&2
-                echo '    fml --help             This help message' >&2
-                echo '' >&2
-                echo 'Administrator option:' >&2
-                echo "    fml --global [...]     Make the new fast module available to all users" >&2
-                echo '                            (requires write permission to the fml app folder:' >&2
-                echo "                             ${fml_base_dir} )" >&2
-                echo '' >&2
-                echo 'Alternate syntax:' >&2
-                echo '    fml <module 1> [<module 2> ...]' >&2
-                echo '                           Make a Fast Module for the listed modules' >&2
-                echo '' >&2
+		cat <<EOF >&2
+Usage:
+    fml                    Toggle Fast Module Loading for the current module environment
+
+    fml --off              Turn off Fast Module Loading completely
+                             (use 'ml --force -fml' to fully disable for this session)
+    fml --on               Turn it back on
+
+    fml --help             This help message
+
+Administrator option:
+    fml --global [...]     Make the new fast module available to all users
+                            (requires write permission to the fml app folder:
+                             ${fml_base_dir} )
+
+Alternate syntax:
+    fml <module 1> [<module 2> ...]
+                           Make a Fast Module for the listed modules
+EOF
+
                 exit
             fi
 

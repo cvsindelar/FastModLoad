@@ -369,10 +369,14 @@ else
         if [[ "${update_needed}" -eq '1' ]] ; then
 	    echo '__fml_start=0 ; '
 	    echo '__fml_end=0 ; '
-	    __fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
-#             cat <<EOF
-# eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build 
-# EOF
+
+	    # We need to do the equivalent of the user typing 'fml' in their own current
+	    #  bash shell. It won't work to do it in this shell (fml.sh), where the user-requested
+	    #  module is likely not yet loaded- loading will be done when the above-echoed
+	    #  commands are processed by the calling shell.
+            cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} fml)"
+EOF
 	fi
     fi
 }
@@ -464,7 +468,7 @@ function __fml() {
     else
         if [[ "${#load_arguments[@]}" -eq 0 && -z "${old_fml_name}" ]] ; then
             # No arguments to fml, and no Fast Module or other modules are loaded:
-            echo 'fml --help'
+            echo 'fml --help ; '
             return
 	fi
         if [[ -n "${old_fml_name}" ]] ; then
@@ -490,8 +494,11 @@ function __fml() {
 		fi
                 return $status
             else
-                echo echo "Modules are already loaded. Please use 'fml' by itself or do 'module reset' first."
-                echo 'fml --help'
+                echo "echo Modules are already loaded. Please use 'fml' by itself or do 'module reset' first."
+            cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} fml --help)"
+EOF
+		exit
                 return
             fi
         fi
@@ -598,8 +605,6 @@ function __fml() {
 	__fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
 
         cat <<EOF
-# eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} build ${requested_fml_name} ${fml_filename})"
-
 echo "Complete. To rapidly load this environment in the future, do:"
 echo "    module reset ; module load ${load_arguments[@]}"
 EOF
@@ -782,7 +787,7 @@ function __fml_build() {
     local tmpfile2
     local tmpfile3
     local ordered_module_list
-    
+
     fml_source_modfile_local="$1"
     shift
     
@@ -818,7 +823,7 @@ function __fml_build() {
 
     stat "${ordered_module_list[@]}" &>/dev/null \
         && eval "$build_lua_record" > "${tmpfile3}"
-
+    
     ##################
     # Concatenate all the .lua files required by this collection,
     #  but strip out the 'depends_on' statements.
