@@ -1,6 +1,7 @@
 # Remaining features to implement:
 
 # TOP PRIORITY
+# 0. doing 'module resert' on top of a fast module causes fml to disable itself
 # 1. for an out of date global module, rebuild it *locally*
 # 2. Clean-up:
 #     - 'module load': When a good fast module is detected and loaded, detect and delete any OTHER
