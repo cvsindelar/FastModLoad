@@ -383,6 +383,9 @@ function module () {
 EOF
             fi
             ;;
-        
+        *)
+            echo 'Programming error' >&2
+            exit 1
+            ;;
     esac
 fi
