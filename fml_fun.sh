@@ -587,8 +587,6 @@ EOF
 	#  of the below 'module load' command:
         mkdir -p $(dirname ${fml_filename} )
 
-        echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
-    
         if [[ ${autofml} -ne 1 ]] ; then
             echo '__fml_start=$(date +%s)'
 
@@ -599,15 +597,27 @@ EOF
 
             echo '__fml_end=$(date +%s)'
 	    echo "cat ${fml_filename%.lua}.out ; "
-	fi
 
-	# Build the module
-	__fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
-
-        cat <<EOF
+	    # Since the above commands are executed in the user shell, they are deferred.
+	    # We therefore need to do the equivalent of the user typing 'fml' in their own current
+	    #  bash shell. It won't work to do it within the fml bash shell.
+            cat <<EOF
+eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile_local} fml ${fmlglobal})"
+EOF
+	else
+            if [[ -n "${fmlglobal}" ]] ; then
+		echo 'printf "Global "'
+	    fi
+            echo echo 'Fast Module Build: '"fml-${requested_fml_name}"
+    
+	    # Module was loaded prior to running 'fml' so just build the module
+	    __fml_build "${fml_source_modfile_local}" "${requested_fml_name}" "${fml_filename}"
+            cat <<EOF
 echo "Complete. To rapidly load this environment in the future, do:"
 echo "    module reset ; module load ${load_arguments[@]}"
 EOF
+	fi
+	
 	# Ensure the fast module will be active going forwards, by
 	#  removing any xxxx.d in the user's .config/fml/fml_prebuilds folder
 	echo "if [[ -d ${fml_prebuilds_dir}/${requested_fml_name}.d ]] ; then "
@@ -764,7 +774,6 @@ function __get_fml_filename() {
         # Skip the second pass of this loop ($fml_basename == $fml2_user) if we are doing a global install.
         #  This means we are going to rebuild the global fastmodule 
         if [[ -n "${fmlglobal}" ]] ; then
-            printf 'Global ' >&2
             break
         fi
     done
