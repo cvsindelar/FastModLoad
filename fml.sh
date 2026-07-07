@@ -98,7 +98,7 @@ if [[ $# -ge 1 ]] ; then
             shift
             if [[ $# -ge 1  && ( "$1" == "--help" || "$1" == "-h" ) ]] ; then
                 shift
-		cat <<EOF >&2
+                cat <<EOF >&2
 Usage:
     fml                    Toggle Fast Module Loading for the current module environment
 
@@ -132,7 +132,7 @@ EOF
                         echo 'return 1 ; '
                     fi
                 fi
-		
+                
                 # Update the config file
                 awk -v active="$1" '$1 != "active" {print} END {print "active "substr(active,3,length(active)-2)}' \
                     ~/.config/fml/config > ~/.config/fml/temp
@@ -180,10 +180,10 @@ EOF
         exit)
             source "${fml_base_dir}"/fml_fun.sh
             __fml_unpack --nofml "${fml_source_modfile}"
-	    echo 'if [[ $? -ne 0 ]] ; then '
+            echo 'if [[ $? -ne 0 ]] ; then '
             echo '    echo "Warning: unable to restore the full lmod environment" ; '
             echo '    return 1 ; '
-	    echo 'fi ; '
+            echo 'fi ; '
 
             echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
             echo 'if [[ -n $( declare -f fml ) ]] ; then unset -f fml ; fi ; '
@@ -235,10 +235,10 @@ else
             if [[ ${fml_active} == "off" ]] ; then
                 echo 'if [[ -n $( declare -f module | grep fml ) ]] ; then module --fmlrestore ; fi ; '
                 echo "Fast Module Loading inactivated. To turn on Fast Module Loading, do 'fml --on'" >&2
-		exit
-	    else
-		:
-		# echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off' (or 'ml --force -fml')" >&2
+                exit
+            else
+                :
+                # echo "Fast Module Loading activated. To turn off Fast Module Loading, do 'fml --off' (or 'ml --force -fml')" >&2
             fi
             
             if [[ -z $( declare -f module | grep fml ) ]] ; then
@@ -260,11 +260,13 @@ function module () {
     fi
 
     local __fml_status
+    local __lmod_status
     local __fml_start
     local __fml_end
     local runtime
 
     unset __fml_status
+    unset __lmod_status
     __fml_start=0
     __fml_end=0
 
@@ -328,21 +330,22 @@ function module () {
                 #  -> in that case, fml.sh will trap the error and try
                 #      the original lmod module command with __fml_module_args
                 __fml_module_args=("\$@")
-                eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )"
-                if [[ \$? -ne 0 ]] ; then
-                    __fml_status=1
-                fi
-		# New bash signaling approach:
-                # eval "status=0 ; \$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ || status=\$? ; echo '__fml_status='\$status )"
 
+                # fml.sh commands pass through the status of any executed lmod commands with
+                #  __lmod_status; we first set it to the default value of zero
+                __lmod_status=0
+                eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} module \$@ )"
+                __fml_status=\$?
+
+                # In case of a major failure, __fml_module_args preserves a record of what happens 
+                #  before or during the fml.sh call; we clear it afterwards
                 unset __fml_module_args
 
-		# New bash signaling approach:
-                # if [[ "\${__fml_status}" -eq 64 ]] ; then
-                #     module --lmod "\$@"
-		#     __fml_status=\$?
-                # elif
-                if [[ "\${__fml_status}" -ne 0 ]] ; then
+                # __fml_status records any unexpected, non-lmod errors. These override
+                #  any lmod error:
+                if [[ "\${__fml_status}" -eq 0 ]] ; then
+                    __fml_status=\$__lmod_status
+                else
                     echo "FastModLoad failure: falling back to Lmod.. "
 
                     echo module "\$@"
@@ -350,7 +353,7 @@ function module () {
 
                     eval "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} fml --off )"
 
-		    # Disable Fast Module Loading:
+                    # Disable Fast Module Loading:
                     echo "As a precaution, Fast Module Loading has been turned off."
                     echo "Fast Module Loading can be restored by 'fml --on'"
                 fi
@@ -360,7 +363,7 @@ function module () {
 
             __fml_start=\$(date +%s)
             module --lmod "\$@"
-	    __fml_status=\$?
+            __fml_status=\$?
             __fml_end=\$(date +%s)
 
             # Zero the runtime unless a module load was requested:

@@ -495,6 +495,7 @@ if [[ -z \$( declare -f module | grep fml ) ]] ; then
 else
     module --lmod $@ ;
 fi ;
+__lmod_status=\$?
 EOF
 }
 
