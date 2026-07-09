@@ -30,19 +30,20 @@ fi
 # declare -a __fml_module_args=()
 
 function bailout() {
+echo blarchifer >&2
     cat <<EOF
     if [[ -n \$( declare -f module | grep fml ) ]] ; then
-        module --fmlrestore ;
+        # module --fmlrestore ;
+	echo "\$(bash ${fml_base_dir}/fml.sh ${fml_source_modfile} fml --off )"
     else
         echo "FastModLoad: Programming error, goodbye"
     fi
-    
     if [[ \${#__fml_module_args[@]} -gt 0 ]] ; then
         __fml_module_args_tmp=("\${__fml_module_args[@]}")
         unset __fml_module_args
         echo "FastModLoad failure: falling back to Lmod..."
-        echo '   'module \${__fml_module_args_tmp[@]}
-        module \${__fml_module_args_tmp[@]}
+        echo '   'module --lmod \${__fml_module_args_tmp[@]}
+        module --lmod \${__fml_module_args_tmp[@]}
         unset __fml_module_args_tmp
     fi    
 EOF
@@ -109,7 +110,7 @@ Usage:
     fml --help             This help message
 
 Administrator option:
-    fml --global [...]     Make the new fast module available to all users
+    fml --global           Make the new fast module available to all users
                             (requires write permission to the fml app folder:
                              ${fml_base_dir} )
 
@@ -161,7 +162,7 @@ EOF
                 fi
             fi
             source "${fml_base_dir}"/fml_fun.sh
-            __fml "${fml_source_modfile}" "${fmlglobal}" load "$@"
+            __fml "${fml_source_modfile}" ${fmlglobal} "$@"
             ;;
         
         module)

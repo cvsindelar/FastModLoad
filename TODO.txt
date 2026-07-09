@@ -1,6 +1,9 @@
 # Remaining features to implement:
 
 # TOP PRIORITY
+# 0. --global --off/on option
+# 1. [--global] --update option
+#       add one more file to the fastmodule folder: xxx.spec, with full modulenames
 # 2. Clean-up:
 #     - 'module load': When a good fast module is detected and loaded, detect and delete any OTHER
 #        local fast module versions whose contents are identical

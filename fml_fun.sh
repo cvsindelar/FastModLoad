@@ -321,6 +321,7 @@ function __fml() {
     ######################
     fmlglobal=''
     fmldebug=''
+    fml_custom_name=''
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -330,6 +331,13 @@ function __fml() {
                 ;;
             --fmldebug)
                 shift
+                ;;
+            "--name" | "-n")
+                shift
+		if [[ $# -gt 0 ]] ; then
+		    fml_custom_name=$1
+		    shift
+		fi
                 ;;
             *)
                 # Stop the loop at the first non-flag argument
@@ -342,7 +350,7 @@ function __fml() {
     # Set up fml load variables & check for errors
     ######################
         
-    load_arguments=( $(__fml_get_load_arguments "$@") )
+    load_arguments=( $(__fml_get_load_arguments load "$@") )
     
     status=0
     old_fml_info=( $(__fml_get_loaded_fml) ) || status=$?
@@ -417,7 +425,7 @@ EOF
         return
     fi
 
-    fml_filename_info=( $(__fml_resolve_filename_info "${fmlglobal}" "${fml_info[@]}") )
+    fml_filename_info=( $(__fml_resolve_filename_info "${fmlglobal}" "${fml_info[@]}" ) )
     fml_filename="${fml_filename_info[0]}"
     requested_fml_name="${fml_filename_info[1]}"
     update_needed="${fml_filename_info[2]}"
@@ -935,6 +943,13 @@ function __fml_unpack() {
     # Create a unique temporary file
     mkdir -p ~/.config/lmod
     tmpfile=$( mktemp -p ~/.config/lmod fmlXXXXXXXXXX )
+
+    if [[ ! -f "${mt_file}" ]] ; then
+	echo "ERROR: the loaded fast module fml-${fml_modname} can no longer be found" >&2
+	# __lmod_module_execute "unload fml-${fml_modname}"
+	exit 1
+    fi
+    
     /bin/cp "${mt_file}" "${tmpfile}"
 
     __lmod_module_execute "restore '$(basename "${tmpfile}")' >& /dev/null"
@@ -1038,7 +1053,7 @@ function __fml_get_loaded_fml() {
 
     if [[ "${loaded_fml_name[0]:-}" =~ ^-?[0-9]+$ && "${loaded_fml_name[0]:-}" -lt 0 ]] ; then
         echo 'FastModLoad internal error: mismatched module environment detected: ' >&2
-        module list
+        module --lmod list
         return 1
     else
         return 0
