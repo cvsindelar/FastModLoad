@@ -1,22 +1,51 @@
 # Remaining features to implement:
 
-# TOP PRIORITY
-# 0. --global --off/on option
-# 1. [--global] --update option
+# FEATURES (top priority)
+# 1a. '--name' option to fml : creates named shortcut loadable by 'fml <shortcut>' or optionally 'module load <shortcut>'
+#   fml -n (--name) option: short name for an environment, dir name will be "name.fml_alias"
+#       - this mechanism allows hierarchical module trees to be (wantonly) loaded
+# 1b. make fast modules work in module collections? (currently, the fast module gets subbed out during ml restore)
+#       -> would simplify saving of large module groups as fast modules
+# 2. --global --off/on option
+# 3. [--global] --update option : check and update all modules (for use as an easybuild hook)
 #       add one more file to the fastmodule folder: xxx.spec, with full modulenames
-# 2. Clean-up:
+
+# ISSUES (top priority)
+# 1. add MODULEPATH to the update check by placing in the .lua_record file
+
+# FEATURES (low priority)
+# 0. Clean-up:
 #     - 'module load': When a good fast module is detected and loaded, detect and delete any OTHER
 #        local fast module versions whose contents are identical
 #       (if we are loading a local module, duplicates will be higher-numbered)
 #     - fml: similarly clean up, if --global then also clean up global duplicates as well
 # 
 #    (works for all users, minimizes file count burden on the filesystem)
-# 3. fml -n (--name) option: short name for an environment, dir name will be "name.fml_alias"
-#     - fml aliases can only be loaded by fml, not by module load
-#     - this mechanism allows hierarchical module trees to be (wantonly) loaded
-# 4. update failure: missing .list file in the R_4.4.2 GLOBAL fast module triggers a rebuild that fails.
-# 5. Finalize Github README
-# 6. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
+# 1. update failure: missing .list file in the R_4.4.2 GLOBAL fast module triggers a rebuild that fails.
+# 2. Finalize Github README
+# 3. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
+# 4. Final testing for robustness (make unit tests)
+# 5. Enlarge the list of default global fast modules
+# 6. Keep full track of user requested loads, and only allow current naming scheme when this is possible
+#    -> name prompt or error out if, i.e., user loaded fml when other modules were present (require module reset)
+# 7. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
+# 8. --name option for 'fml' & allow 4 or more modules per fast module
+# 9. Warn when including conda/miniconda or EasyBuild in a fast module
+# 10. fml options:
+#  --on : write to .config/fml/fml.config : active on
+#  --off : write to .config/fml/fml.config : active off
+#  --auto : write to .config/fml/fml.config : active auto
+#  --fail : write to .config/fml/fml.config : active fail
+#  --thresh : set to <val>
+#  --update/force : overwrite existing fast module even if up to date
+#  --clear : permanently delete fast module file (recognize --global)
+#  --nuke : recognize --global
+# 11. Rename functions in fml_fun.sh to more be more logical
+# 12. interrupting ml --force -fml with control-c (i.e. during fast module unpacking) results in
+#      a fast module loaded but with fml unloaded, and the hijacked module function still present
+
+# ISSUES (low priority)
+# 1. Edge case: when bouchet Python global module exists on intel nodes but not on AMD nodes, this leads to failure:
 ml fml
 ml Python
 alloc --mem=8G -c 1 -p day_amd
@@ -39,32 +68,8 @@ Currently Loaded Modules:
   6) bzip2/1.0.8-GCCcore-13.3.0              13) OpenSSL/3
   7) ncurses/6.5-GCCcore-13.3.0              14) Python/3.12.3-GCCcore-13.3.0
 
-
-# Priority #2
-# 0. make fast modules work in module collections? (currently, the fast module gets subbed out during ml restore)
-#       -> would simplify saving of large module groups as fast modules
-# 1. Address double-calling of lmod module when the user requested module arguments produce an error. Best solution is #2, below
-# 2. Replace 'module --lmod' calls in __fml_module/__fml with bash exit signals (i.e. 64) to the calling function
-# 3. Test easybuild fml-1.0beta.eb with auto-installation of global fast modules
-# 4. Final testing for robustness (make unit tests)
-# 5. Enlarge the list of default global fast modules
-# 6. Keep full track of user requested loads, and only allow current naming scheme when this is possible
-#    -> name prompt or error out if, i.e., user loaded fml when other modules were present (require module reset)
-# 7. account for very long module lists that break 'fml': fml_prebuilds/fml<n>.long/modlist.txt
-# 8. --name option for 'fml' & allow 4 or more modules per fast module
-# 9. Warn when including conda/miniconda or EasyBuild in a fast module
-# 10. fml options:
-#  --on : write to .config/fml/fml.config : active on
-#  --off : write to .config/fml/fml.config : active off
-#  --auto : write to .config/fml/fml.config : active auto
-#  --fail : write to .config/fml/fml.config : active fail
-#  --thresh : set to <val>
-#  --update/force : overwrite existing fast module even if up to date
-#  --clear : permanently delete fast module file (recognize --global)
-#  --nuke : recognize --global
-# 11. Rename functions in fml_fun.sh to more be more logical
-# 12. interrupting ml --force -fml with control-c (i.e. during fast module unpacking) results in
-#      a fast module loaded but with fml unloaded, and the hijacked module function still present
+# 2. Address double-calling of lmod module when the user requested module arguments produce an error. Best solution is #2, below
+# 3. Fix error handling. Replace 'module --lmod' calls in __fml_module/__fml with bash exit signals (i.e. 64) to the calling function?
 
 # Priority #3
 
