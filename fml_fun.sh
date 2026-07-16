@@ -33,7 +33,7 @@ end '
 # Bash code is saved in string form to be executed later.
 # When executed, it will require that the list of module files, $ordered_module_list, be set already.
 ##################
-build_lua_record="stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
+build_lua_record='echo ${MODULEPATH} ; '"stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
 
 ######################
 # __fml_module() : the main fast module loading function
@@ -105,6 +105,8 @@ function __fml_module() {
             fi
 
             if [[ -n "${list_file}" ]] ; then
+		echo splarbifer "${list_file%.list}.fancy_list" >&2
+		echo splarbifer "${MODULEPATH}" >&2
                 cat <<EOF
 cat "${list_file%.list}.fancy_list"
 echo "#####################################################"
@@ -280,7 +282,7 @@ EOF
         if [[ "${update_needed}" -eq '1' ]] ; then
 	    echo '__fml_start=0 ; '
 	    echo '__fml_end=0 ; '
-
+	    
 	    # We need to do the equivalent of the user typing 'fml' in their own current
 	    #  bash shell. It won't work to do it in this shell (fml.sh), where the user-requested
 	    #  module is likely not yet loaded- loading will be done when the above-echoed
@@ -812,6 +814,11 @@ function __fml_build() {
         LMOD_PAGER=none ml list 2> ${mod_filename%.lua}.fancy_list
     fi
     /bin/rm ${mod_filename%.lua}.list_tmp >& /dev/null
+    
+    echo blarchifer ${mod_filename%.lua}.list >&2
+    cat ${mod_filename%.lua}.list >&2
+    cat ${mod_filename%.lua}.fancy_list >&2
+    echo blarcharoonee >&2
     
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
     mkdir -p ~/.config/lmod

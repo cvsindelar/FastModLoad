@@ -11,7 +11,8 @@
 #       add one more file to the fastmodule folder: xxx.spec, with full modulenames
 
 # ISSUES (top priority)
-# 1. add MODULEPATH to the update check by placing in the .lua_record file
+# 1. error checking: added MODULEPATH to the update check by placing in the .lua_record file
+# 2. module list doesn't necessarily match the loaded module (just picks the first of global vs local available fast modules and ignores ___1 suffix versions!)
 
 # FEATURES (low priority)
 # 0. Clean-up:
