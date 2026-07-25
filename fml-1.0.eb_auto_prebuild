@@ -1,0 +1,94 @@
+easyblock = 'Tarball'
+
+name = 'fml'
+version = '1.0'
+
+homepage = 'https://github.com/cvsindelar/FastModLoad'
+description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
+
+toolchain = SYSTEM
+
+source_urls = ['https://github.com/cvsindelar/FastModLoad/archive/refs/tags/']
+sources = ['v%(version)s.tar.gz']
+
+start_dir = 'FastModLoad-%(version)s'
+
+postinstallcmds = [
+    "type -t module || echo 'MODULE FUNCTION NOT FOUND'", # Diagnostic
+
+    ##############################3
+    # Make sure the new file/folder group permissions are inherited
+    #  so that fellow group members may also create global fast modules:
+    ##############################3    
+    "mkdir %(installdir)s/fml_prebuilds",
+    "chmod g+s %(installdir)s/fml_prebuilds",
+]
+
+sanity_check_paths = {
+    'files': ['fml.sh'],
+    'dirs': ['.'],
+}
+
+# Sanity check code below could be used to build default fast modules- unfortunately
+#  the results reflect a different user environment (EB sanity environment)
+#  and so fml will detect changes and automatically rebuild them in the user environment.
+
+# # Modules for which we will pre-generate fast modules for global use:
+# _global_fast_mods = [
+#     ('R','4.4.1'),
+#     ('RELION','4.0.2'),
+#     ('RELION','5.0.0'),
+# ]
+# 
+# # Pre-format _global_fast_mods into a string bash can understand
+# # Extract just the names from the (name, version) tuples in _global_fast_mods
+# _global_fast_mods_list = " ".join(["%s/%s" % (d[0], d[1]) for d in _global_fast_mods])
+# 
+# sanity_check_commands = [
+#     ##############################
+#     # Now use 'fml' to build the list of global Fast Modules, above
+#     # Note, global_mods only exists for the duration of the following single command string:
+#     ##############################
+#     "printf '' > %(installdir)s/prebuild_log.out\n" + \
+#     "global_mods=( %s )\n" % _global_fast_mods_list + \
+#     
+#     "module --force unload fml\n"                                                           + \
+#     "module reset\n"                                                                        + \
+#     "module list &>> %(installdir)s/prebuild_log.out\n"                                     + \
+#     "echo $MODULEPATH &>> %(installdir)s/prebuild_log.out\n"                                + \
+#     
+#     "# Manually finish loading the fml module, since EasyBuild doesn't do it:\n"            + \
+#     "eval \"$( bash %(installdir)s/fml.sh - init )\" &>> %(installdir)s/prebuild_log.out\n" + \
+#     
+#     "for mod in ${global_mods[@]} ; do\n"                                                   + \
+#     "    module reset\n"                                                                        + \
+#     "    echo $mod >> %(installdir)s/prebuild_log.out\n"                                    + \
+# 
+#     "    # Get the full module name from the default labelled by '(D)'\n"                   + \
+#     "    # fullmod=$(module -t --redirect --default avail $mod 2>&1 | grep -v ':')\n"       + \
+#     "    echo noo &>> %(installdir)s/prebuild_log.out\n"   + \
+#     "    module -t --redirect --default avail $mod &>> %(installdir)s/prebuild_log.out\n"   + \
+#     "    echo nee&>> %(installdir)s/prebuild_log.out\n"   + \
+#     "    module -t --redirect --default avail $mod 2>&1 | grep -v ':' &>> %(installdir)s/prebuild_log.out\n" + \
+#     "    echo na&>> %(installdir)s/prebuild_log.out\n"   + \
+#     "    fullmod=$(module -t --redirect --default avail $mod 2>&1 | grep -v ':')\n"           + \
+#     "    echo module --lmod load $fullmod &>> %(installdir)s/prebuild_log.out\n"            + \
+#     "    module --lmod load $fullmod &>> %(installdir)s/prebuild_log.out\n"                 + \
+#     "    echo fml --global &>> %(installdir)s/prebuild_log.out\n"                           + \
+#     "    fml --global &>> %(installdir)s/prebuild_log.out\n"                                + \
+#     "    module unload $fullmod &>> %(installdir)s/prebuild_log.out\n"                      + \
+#     "done\n",
+# ]
+
+modluafooter = '''
+local script = pathJoin(root, "fml.sh")
+
+if myShellType() == "sh" then
+    execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ init)" ]], modeA={"load"}}
+    execute {cmd=[[ eval "$(bash ]] .. script .. [[ ]] .. myFileName() .. [[ exit)" ]], modeA={"unload"}}
+else
+  execute {cmd="echo 'FML: sorry, this is not implemented for shell type ".. myShellType() .. "' >&2", modeA={"load"}}
+end
+'''
+
+moduleclass = 'tools'

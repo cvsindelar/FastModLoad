@@ -13,17 +13,6 @@ sources = ['v%(version)s.tar.gz']
 
 start_dir = 'FastModLoad-%(version)s'
 
-# Modules for which we will pre-generate fast modules for global use:
-_global_fast_mods = [
-    ('R','4.4.1'),
-    ('RELION','4.0.2'),
-    ('RELION','5.0.0'),
-]
-
-# Pre-format _global_fast_mods into a string bash can understand
-# Extract just the names from the (name, version) tuples in _global_fast_mods
-_global_fast_mods_list = " ".join(["%s/%s" % (d[0], d[1]) for d in _global_fast_mods])
-
 postinstallcmds = [
     "type -t module || echo 'MODULE FUNCTION NOT FOUND'", # Diagnostic
 
@@ -39,33 +28,6 @@ sanity_check_paths = {
     'files': ['fml.sh'],
     'dirs': ['.'],
 }
-
-# This sanity check is also functional - it builds our default fast modules:
-sanity_check_commands = [
-    ##############################
-    # Now use 'fml' to build the list of global Fast Modules, above
-    # Note, global_mods only exists for the duration of the following single command string:
-    ##############################
-    "printf '' > %(installdir)s/prebuild_log.out\n" + \
-    "global_mods=( %s )\n" % _global_fast_mods_list + \
-    
-    "module --force unload fml\n"                                                           + \
-    "module reset\n"                                                                        + \
-    "module list &>> %(installdir)s/prebuild_log.out\n"                                     + \
-    
-    "# Manually finish loading the fml module, since EasyBuild doesn't do it:\n"            + \
-    "eval \"$( bash %(installdir)s/fml.sh - init )\" &>> %(installdir)s/prebuild_log.out\n" + \
-    
-    "for mod in ${global_mods[@]} ; do\n"                                                   + \
-    "    echo $mod >> %(installdir)s/prebuild_log.out\n"                                    + \
-
-    "    # Get the full module name from the default labelled by '(D)'\n"                   + \
-    "    fullmod=$(module --redirect avail $mod 2>&1 | awk \"/\\(D\\)/ {print \\$(NF-1); exit}\")\n" + \
-    "    echo fml --global $fullmod &>> %(installdir)s/prebuild_log.out\n"                  + \
-    "    fml --global $fullmod &>> %(installdir)s/prebuild_log.out\n"                       + \
-    "    module unload $fullmod &>> %(installdir)s/prebuild_log.out\n"                       + \
-    "done\n",
-]
 
 modluafooter = '''
 local script = pathJoin(root, "fml.sh")
