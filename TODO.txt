@@ -6,13 +6,11 @@
 #       - this mechanism allows hierarchical module trees to be (wantonly) loaded
 # 1b. make fast modules work in module collections? (currently, the fast module gets subbed out during ml restore)
 #       -> would simplify saving of large module groups as fast modules
-# 2. --global --off/on option
+# 2. --global --off/on option : turns off fast module loading for all users
 # 3. [--global] --update option : check and update all modules (for use as an easybuild hook)
 #       add one more file to the fastmodule folder: xxx.spec, with full modulenames
 
 # ISSUES (top priority)
-# 1. error checking: added MODULEPATH to the update check by placing in the .lua_record file
-# 2. module list doesn't necessarily match the loaded module (just picks the first of global vs local available fast modules and ignores ___1 suffix versions!)
 
 # FEATURES (low priority)
 # 0. Clean-up:

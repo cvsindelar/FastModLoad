@@ -33,7 +33,7 @@ end '
 # Bash code is saved in string form to be executed later.
 # When executed, it will require that the list of module files, $ordered_module_list, be set already.
 ##################
-build_lua_record='echo ${MODULEPATH} ; '"stat -c '%y'"' ${ordered_module_list[@]}; cat ${ordered_module_list[@]}'
+build_lua_record='echo ${MODULEPATH} ; '"stat -c '%y'"' ${ordered_module_list[@]} ; '
 
 ######################
 # __fml_module() : the main fast module loading function
@@ -93,25 +93,17 @@ function __fml_module() {
     ######################
     if [[ " $@ " == *" list "* ]] ; then
         terselist=$(module --terse list 2>&1 )
-        fml_name=$( echo "${terselist}" | awk '$0 ~ "^fml[-]" {print(substr($1, 5, length($1)-4))}' )
-        if [[ -n ${fml_name} ]] ; then
-            list_file=
-            tmp1=${fml_global_prebuilds_dir}/${fml_name}/fml-${fml_name}.list
-            tmp2=${fml_prebuilds_dir}/${fml_name}/fml-${fml_name}.list
-            if [[ -f "${tmp1}" ]] ; then
-                list_file="${tmp1}"
-            elif [[ -f "${tmp2}" ]] ; then
-                list_file="${tmp2}"
-            fi
-
-            if [[ -n "${list_file}" ]] ; then
-		echo splarbifer "${list_file%.list}.fancy_list" >&2
-		echo splarbifer "${MODULEPATH}" >&2
-                cat <<EOF
+        fml_file=$(  ( module --mt ; echo "${process_collection_lua_script}" ) |& lua | awk '$0 ~ "[/]fml[-][^/]+[.]lua$" {print $2}' )
+        if [[ -n ${fml_file} ]] ; then
+            list_file=${fml_file%.lua}.list
+	    fml_name=$( echo $fml_file | awk '
+{ind=match($0,"[/]fml[-][^/]+[.]lua$"); print(substr($0,ind + 1, length($0) - ind - 4)); }' )
+	    
+            cat <<EOF
 cat "${list_file%.list}.fancy_list"
 echo "#####################################################"
 echo "FastModLoad Emulated Environment:"
-echo "    fml-${fml_name}"
+echo "    ${fml_name}"
 echo "#####################################################"
 echo ''
 echo "Type 'fml' to disable this Fast Module and restore the original Lmod environment"
@@ -119,11 +111,10 @@ echo "Type 'fml --off' or 'ml --force -fml' to turn off Fast Module Loading alto
 echo "Type 'module --lmod list' to peek at the current (true) Lmod environment"
 echo ''
 EOF
-            else
-                module list
-            fi
-            return
+        else
+            module list
         fi
+        return
     fi
     
     ######################
@@ -740,6 +731,10 @@ function __get_fml_filename() {
                 stat "${ordered_module_list[@]}" &>/dev/null \
                     && eval ${build_lua_record} | cmp ${fml_filename%.lua}.lua_record >& /dev/null
                 update_needed=$?
+                if [[ $update_needed != 1 ]] ; then
+		    __fml_assemble_modfiles ${ordered_module_list[@]} | cmp ${fml_filename} >& /dev/null
+                    update_needed=$?
+		fi
             else
                 update_needed=1
             fi
@@ -815,11 +810,6 @@ function __fml_build() {
     fi
     /bin/rm ${mod_filename%.lua}.list_tmp >& /dev/null
     
-    echo blarchifer ${mod_filename%.lua}.list >&2
-    cat ${mod_filename%.lua}.list >&2
-    cat ${mod_filename%.lua}.fancy_list >&2
-    echo blarcharoonee >&2
-    
     # tmpfile1=$( mktemp -p $(dirname "${mod_filename}") )
     mkdir -p ~/.config/lmod
     tmpfile1=$( mktemp ~/.config/lmod/fmltmpXXXXXXXXXX)
@@ -845,12 +835,7 @@ function __fml_build() {
     ##################
     
     printf '' > "${tmpfile2}"
-    for m in ${ordered_module_list[@]}; do
-        echo "do -- Scope for $m"
-        # Skip all valid lua depends_on() statements, including with comments appended
-        grep -E -v '^[[:space:]]*depends_on\([[:space:]]*"[^"]*"[[:space:]]*\)[[:space:]]*(--.*)?$' "$m"
-        echo "end -- End scope for $m"
-    done >> "${tmpfile2}"
+    __fml_assemble_modfiles "${ordered_module_list[@]}" >> "${tmpfile2}"
     
     # In case there were previous versions present, possibly being written by someone else:
     #  make the updates atomic using the tmpfiles:
@@ -896,6 +881,18 @@ function __fml_build() {
 echo 'fi ; '
 
     # cat "${mod_filename%.lua}.out"
+}
+
+######################
+# Assemble 
+######################
+function __fml_assemble_modfiles() {
+    for m in "$@" ; do
+        echo "do -- Scope for $m"
+        # Skip all valid lua depends_on() statements, including with comments appended
+        grep -E -v '^[[:space:]]*depends_on\([[:space:]]*"[^"]*"[[:space:]]*\)[[:space:]]*(--.*)?$' "$m"
+        echo "end -- End scope for $m"
+    done
 }
 
 ######################
