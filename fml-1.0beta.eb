@@ -1,7 +1,7 @@
 easyblock = 'Tarball'
 
 name = 'fml'
-version = '1.0beta2'
+version = '1.0'
 
 homepage = 'https://github.com/cvsindelar/FastModLoad'
 description = 'Fast Module Loader for Lmod-Based HPC Software Stacks'
