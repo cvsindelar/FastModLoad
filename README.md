@@ -19,5 +19,14 @@ module [...]  # Augmented Lmod module function:
 fml           # Toggles between:
               #   (1) Building/loading a fast module for the current environment
               #   (2) Unpacking a loaded fast module back to the original Lmod environment
+
+fml --off     # Turn off Fast Module Loading completely
+fml --on      # Turn it back on
+
+fml --help    # Show this help info
+
+# Administrator option:
+fml --global  # Make the new fast module available to all users
+                 (requires write permission to the fml app folder)
 ```
 
