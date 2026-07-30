@@ -367,6 +367,8 @@ function __fml() {
             # If the user types fml with no arguments, trigger 'autofml'
             #  to build a Fast Module from the current environment
             autofml=1
+            # Get the original list of user-requested (currently loaded) modules
+            load_arguments=( $(__fml_get_message_module_list) )
         else
             # User requested another module load on top of existing loaded modules
             #  (not allowed for now)
@@ -404,12 +406,18 @@ EOF
         #  gave module arguments -> fall through to build/load below
     fi
 
+    if [[ ${#load_arguments[@]} -ge 4 ]] ; then
+	echo 'Sorry, fast modules are currently not allowed for 4 or more user-specified modules:' >&2
+	for l in ${load_arguments[@]} ; do
+	    echo "   ${l}" >&2
+	done
+	return
+    fi
+
     status=0
     if [[ ${autofml} -eq 0 ]] ; then
         fml_info=( $(__fml_get_load_info "${load_arguments[@]}" ) ) || status=$?
     else
-        # Get the original list of user-requested (currently loaded) modules
-        load_arguments=( $(__fml_get_message_module_list) )
         fml_info=( $(__fml_get_load_info --slow "${load_arguments[@]}" ) )  || status=$?
     fi
 
@@ -1089,7 +1097,6 @@ function __fml_get_load_info() {
     fi
 
     if [[ "$#" -gt 3 ]] ; then
-	echo 'Fast modules not allowed for 4 or more modules' >&2
 	return 1
     fi
 
